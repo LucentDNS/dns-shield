@@ -247,6 +247,10 @@ SDK；挖矿域名；钓鱼、恶意软件分发与诈骗域名；以及中国�
   `! List revision:` 就是它的身份标识。
 - `THIRD-PARTY-NOTICES.md` — 每个订阅源归谁所有、采用什么许可证，以及那一条禁止商业使用的源。
   某个源没有登记在这里，`tools/audit.js` 会让构建失败。
+- `CODE_OF_CONDUCT.md` — Contributor Covenant 2.1。
+- `.github/ISSUE_TEMPLATE/` — 误杀与漏拦两个表单。它们只问四件事，因为缺任何一件都无法着手排查。
+- `.github/workflows/build.yml` — 每日构建。它对本地和线上跑的是同一道闸门：任何可能改变判定结果的
+  推送都会再跑一次 `npm run verify`。
 - `REFERRAL-GAPS.md` — 自动生成：一条白名单过滤器会从发布文件中释放哪些域名。
 - `dist/build.log`、`dist/audit.log`、`dist/benchmark.txt`、`dist/stats.json` — 参考构建产生的日志与
   统计摘要。
@@ -266,6 +270,7 @@ SDK；挖矿域名；钓鱼、恶意软件分发与诈骗域名；以及中国�
 | 什么算本项目的安全问题？ | [`SECURITY.md`](SECURITY.md) |
 | 每个订阅源归谁、什么许可证？ | [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md) |
 | 工具链改了什么？ | [`CHANGELOG.md`](CHANGELOG.md) |
+| 参与者的行为规范是什么？ | [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) |
 
 ## 自行构建
 

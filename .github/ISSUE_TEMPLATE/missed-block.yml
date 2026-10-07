@@ -1,0 +1,50 @@
+name: Something got through that should have been blocked
+description: An ad, tracker, telemetry call or phishing host survived the list.
+title: '[missed] '
+labels: ['missed block']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A list this size is judged by what it misses as much as by what it catches. The comparison
+        against the four widely used lists lives in `dist/benchmark.txt`; a host none of them carry
+        is the interesting kind of report.
+  - type: input
+    id: host
+    attributes:
+      label: Which host got through?
+      description: The hostname only, e.g. `track.example.com`.
+      placeholder: track.example.com
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: How do you know it is an ad, tracker or worse?
+      description: |
+        The blocked request, the app or page it came from, a sandbox or VirusTotal link, the vendor's
+        own documentation. A domain that merely looks suspicious tends not to survive review, and the
+        project would rather not block a business because its name reads oddly.
+    validations:
+      required: true
+  - type: dropdown
+    id: category
+    attributes:
+      label: What is it?
+      options:
+        - Advertising
+        - Tracking or analytics
+        - Telemetry
+        - Malware, phishing or scam
+        - Chinese app telemetry
+        - Not sure
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: List revision
+      description: The `! List revision:` line in the header of the list you are running.
+      placeholder: '4c5a92e2b34e'
+    validations:
+      required: false

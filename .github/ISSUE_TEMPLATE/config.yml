@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Security report or leaked credential
+    url: https://github.com/LucentDNS/dns-shield/security/advisories/new
+    about: Report privately through the Security tab rather than in a public issue.
+  - name: How to report a false positive
+    url: https://github.com/LucentDNS/dns-shield/blob/main/CONTRIBUTING.md
+    about: What to include so the report can actually be acted on.
+  - name: Which list to install and how
+    url: https://github.com/LucentDNS/dns-shield#readme
+    about: Installation for AdGuard Home, AdGuard DNS, Pi-hole and dnsmasq.

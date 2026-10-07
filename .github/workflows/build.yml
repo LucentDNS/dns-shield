@@ -25,12 +25,16 @@ on:
         default: false
   push:
     branches: [main]
-    # A documentation-only change must not trigger a 10-minute feed download.
+    # A documentation-only change must not trigger a 10-minute feed download. These are the paths
+    # whose contents any gate in tools/ reads, though: a licence, a feed entry or a policy file can
+    # change a verdict without changing a single rule, and a run is the only thing that checks.
     paths:
       - 'tools/**'
       - 'data/**'
       - 'package.json'
+      - 'LICENSE'
       - 'THIRD-PARTY-NOTICES.md'
+      - 'CODE_OF_CONDUCT.md'
       - '.github/workflows/build.yml'
 
 # One publishing run at a time; a queued run supersedes a waiting one.
@@ -122,6 +126,14 @@ jobs:
         # Documents what an allowlist filter would release from the list being published. Generated
         # rather than written by hand so it cannot drift away from the rules it describes.
         run: node tools/referral-gaps.js
+
+      - name: Verify (push)
+        # `npm run verify` is the same gate a maintainer runs locally. It is out-of-band here: a push
+        # to main is the one moment when a change that no longer passes can be caught before a
+        # subscriber receives it, and the gates it re-runs are the whole point of the project being
+        # reviewable. Skipped on schedules and manual runs, which verify inline above.
+        if: github.event_name == 'push'
+        run: npm run verify
 
       - name: Publish
         # `git pull --rebase` before the push is not optional: a scheduled run can start from a

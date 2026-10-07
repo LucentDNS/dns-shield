@@ -285,6 +285,11 @@ deleting a line from the protection set.
   product is not changelogged: `! List revision:` inside the list identifies it.
 - `THIRD-PARTY-NOTICES.md` — who owns each feed, what it is licensed under, and the one feed whose
   licence forbids commercial use. `tools/audit.js` fails the build if a feed is missing from it.
+- `CODE_OF_CONDUCT.md` — Contributor Covenant 2.1.
+- `.github/ISSUE_TEMPLATE/` — the false-positive and missed-block forms. They ask for four things,
+  because a report missing any of them cannot be acted on.
+- `.github/workflows/build.yml` — the daily build. It runs the same gate locally as it does here:
+  `npm run verify` runs again on any push that could change a verdict.
 - `REFERRAL-GAPS.md` — generated: what an allowlist filter would release from the published file.
 - `dist/build.log`, `dist/audit.log`, `dist/benchmark.txt`, `dist/stats.json` — logs and summary
   from the reference build.
@@ -305,6 +310,7 @@ deleting a line from the protection set.
 | What counts as a security problem here? | [`SECURITY.md`](SECURITY.md) |
 | Who owns the feeds, and under what licence? | [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md) |
 | What changed in the toolchain? | [`CHANGELOG.md`](CHANGELOG.md) |
+| How are contributors expected to behave? | [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) |
 
 ## Building it yourself
 

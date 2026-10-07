@@ -1,0 +1,65 @@
+name: Something was blocked that should not have been
+description: A site or app broke after installing the list. This is the most useful report you can send.
+title: '[false positive] '
+labels: ['false positive']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The list errs toward blocking, so breakage is the cost of running it. A report that names
+        the host and the rule gets it fixed upstream and, if needed, patched here.
+
+        Please read `CONTRIBUTING.md` first - the four items below are the whole report.
+  - type: input
+    id: host
+    attributes:
+      label: Which host was blocked?
+      description: The hostname only, e.g. `api.example.com`. Not the full URL with a path.
+      placeholder: api.example.com
+    validations:
+      required: true
+  - type: textarea
+    id: broke
+    attributes:
+      label: What stopped working?
+      description: The app or site, and the visible symptom (won't load, button spins forever, no images).
+    validations:
+      required: true
+  - type: textarea
+    id: rule
+    attributes:
+      label: Which rule fired?
+      description: |
+        The list exists so this is answerable. Paste the output of:
+
+        ```
+        curl "http://127.0.0.1:3000/control/filtering/check_host?name=api.example.com" -u admin:YOUR_PASSWORD
+        ```
+
+        A reply of `NotFilteredNotFound` means another filter list, not this one, is responsible.
+      render: json
+    validations:
+      required: true
+  - type: dropdown
+    id: purpose
+    attributes:
+      label: Is that host an advertising, tracking or telemetry endpoint?
+      description: |
+        Answer honestly. A host that really is a tracker can still be released deliberately - the
+        project has an exceptions layer for exactly that - but the answer changes how it is handled.
+      options:
+        - 'No - it is only infrastructure the app needs'
+        - 'Not sure'
+        - 'Partly - it also carries ads or telemetry'
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: List revision
+      description: |
+        The `! List revision:` line in the header of the list you are running. It is the only way to
+        tell which build a report is about.
+      placeholder: '4c5a92e2b34e'
+    validations:
+      required: false

@@ -26,6 +26,13 @@ See `ARCHITECTURE.md` ("Reproducible output") for how both values are derived.
   read as a statement about everybody else's work.
 - **No credential defaults in the tools.** `tools/agh-toggle.js` and `tools/agh-live-check.js`
   require `AGH_PASS` and exit 2 with instructions when it is unset.
+- **A push can no longer skip the gate.** The workflow runs `npm run verify` on any push to a path
+  that can change a verdict, so an edit that breaks attribution, coverage or the syntax rules fails
+  the run that carries it rather than the next morning's scheduled build.
+- **Reports now have somewhere to go.** Issue forms for a false positive and a missed block, both
+  asking for the host and the rule that fired; `CODE_OF_CONDUCT.md`; a monthly grouped Dependabot
+  update for the workflows' own actions; and a pull request template that states the two rules that
+  matter (do not hand-edit `dist/`, do not add a feed without a `risk` and an attribution row).
 
 ## 2026-10-07 — first published list
 

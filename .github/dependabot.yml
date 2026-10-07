@@ -1,0 +1,14 @@
+version: 2
+updates:
+  # The workflow pins actions by major tag; this keeps those tags from silently going stale.
+  # Monthly and grouped, because this repository has one dependency-free toolchain and does not
+  # need a pull request per action per week.
+  - package-ecosystem: github-actions
+    directory: '/'
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: 'ci'
+    labels:
+      - dependencies
