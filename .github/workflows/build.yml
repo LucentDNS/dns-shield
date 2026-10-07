@@ -62,9 +62,16 @@ jobs:
         # Feed bodies change rarely; restoring them turns a cold 10-minute fetch into a warm
         # 30-second build. `restore-keys` without a run-id suffix means the most recent cache is
         # always reused, and a fresh one is written by the step below.
+        #
+        # The per-feed snapshot rides along because it is derived from exactly this feed set and is
+        # cached against the list revision - a snapshot from a different feed set is detected and
+        # rebuilt, so restoring a stale one can never mis-base the restore.
         uses: actions/cache@v4
         with:
-          path: .cache/sources
+          path: |
+            .cache/sources
+            dist/.perfeed.raw
+            dist/.perfeed.revision
           key: feeds-${{ github.run_id }}
           restore-keys: |
             feeds-
