@@ -1,0 +1,56 @@
+benchmark  DESKTOP-KRFIFET  2026-10-07T07:09:01.386Z
+
+============================================================================
+our list
+============================================================================
+  file                              11,758,563 bytes
+  block rules                       517,007
+  allow rules                       19
+
+============================================================================
+coverage against peers
+============================================================================
+  peer                  their rules  we have %   they lack   we lack
+  AdGuard DNS filter    178,197      96.8%       5,758       344,568
+  HaGeZi's Pro          198,605      94.5%       10,982      329,384
+  OISD Big              240,434      95.1%       11,694      288,267
+  AdRules DNS List      198,109      95.4%       9,078       327,976
+
+  "we have %" is the share of that peer's blocking set we also block - its holes in us.
+  "they lack" counts rules that peer has and we do not. "we lack" counts ours it does not have.
+
+============================================================================
+false-positive ruler (AdGuard exceptions)
+============================================================================
+  Every host below is one AdGuard un-blocked after a real breakage report. A list that
+  blocks it is blocking something a human already proved broken.
+  ruler entries: 172
+
+  list                  blocks a proven-broken host   blocked hosts
+  DNS Shield (ours)     2                             sax.sina.com.cn, log.mmstat.com
+  AdGuard DNS filter    23                            swasc.homedepot.com, data.promo.timhortons.ca, data.notify.macys.com, om-ssl.consorsbank.de, belgium.wolterskluwer.com, sedge.nfl.com
+  HaGeZi's Pro          2                             r.sascdn.com, proto2ad.durasite.net
+  OISD Big              4                             sax.sina.com.cn, proto2ad.durasite.net, tags.crwdcntrl.net, str.hit.gemius.pl
+  AdRules DNS List      18                            swasc.homedepot.com, cmp.osano.com, data.promo.timhortons.ca, data.notify.macys.com, om-ssl.consorsbank.de, belgium.wolterskluwer.com
+
+============================================================================
+verdict
+============================================================================
+  our block rules                     517,007
+  union of the four peers             541,509
+  largest peer                        OISD Big            240,434
+  union coverage                      95.5% of every rule any of the four peers carries
+  union contributions                 517,007 from us, 24,502 only they carry
+  biggest remaining gap               HaGeZi's Pro        10,982 of its rules are not in ours
+
+  Peer rules we do not carry, per peer (this is what a future source would have to close):
+    OISD Big              11,694
+    HaGeZi's Pro          10,982
+    AdRules DNS List      9,078
+    AdGuard DNS filter    5,758
+
+============================================================================
+protected-host check
+============================================================================
+  93 protected host(s)
+  OK   no protected host appears as an allow rule

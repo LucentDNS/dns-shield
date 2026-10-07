@@ -1,0 +1,26 @@
+# Extra block rules - the curated patch file, and nothing else.
+#
+# WHY THIS FILE EXISTS
+# A DNS list built purely from upstream feeds has holes wherever upstream publishes the name in a
+# shape that does not survive normalisation. All three entries below are canonical ad/telemetry
+# hosts whose registrable parent IS blocked by a feed, so the host is already unreachable - but
+# only because the whole tree is blocked, which means a future exception for the parent would
+# silently release the tracker too. Naming them here pins them individually.
+#
+#   pagead2.googlesyndication.com  Google's ad-serving endpoint. Feeds carry it only as a
+#                                  subdomain string inside a foreign-language rule; its parent
+#                                  `googlesyndication.com` is blocked, so it is covered today.
+#   log.mmstat.com                 Alibaba/Taobao page-visit beacon. Same shape: only ever seen
+#                                  as an upstream `@@` exception, never as a bare block rule.
+#   sax.sina.com.cn                Sina ad-exchange endpoint. Feeds list `r.sax.sina.com.cn` and
+#                                  friends but not this one, and it has an upstream exception.
+#
+# WHY THIS FILE IS DELIBERATELY TINY
+# Every line here is a rule no feed justifies, so it is the one place where a mistake cannot be
+# caught by upstream. It is a patch file, not a second input layer: anything that belongs in a
+# feed should be fixed upstream instead. The build warns when it exceeds 25 entries.
+#
+# One hostname per line, lowercase. Same shapes as the whitelist: `host.example.com` is exact.
+pagead2.googlesyndication.com
+log.mmstat.com
+sax.sina.com.cn

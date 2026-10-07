@@ -1,0 +1,26 @@
+# Downloaded feed bodies. Rebuilt by `node tools/fetch.js`; never commit them, because a stale
+# cache in the repository would silently override a live feed.
+.cache/
+
+# Build intermediates and logs. The published list (dist/dns-shield.txt), its statistics
+# (dist/stats.json) and the benchmark report (dist/benchmark.txt) ARE committed on purpose: the
+# raw subscription URL points at dist/dns-shield.txt.
+dist/.compiled.raw
+dist/previous.txt
+dist/*.log
+
+# One-off diagnostic output from tools/diag-*.js, and the scratch files the live AdGuard Home
+# check writes (tools/agh-toggle.js, tools/agh-live-check.js).
+diag-*.txt
+gap-*.txt
+*-console.txt
+probe-out.txt
+dist/agh-*.json
+dist/agh-probe.txt
+dist/body-tmp.json
+dist/filtering-status.toml
+
+node_modules/
+npm-debug.log*
+.DS_Store
+Thumbs.db

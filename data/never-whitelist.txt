@@ -1,0 +1,116 @@
+# Never-whitelist - the protected set.
+#
+# These domains can never be released: the build refuses any whitelist rule (private listing
+# or upstream exception) that would name them, and refuses any whole-tree rule that contains
+# them. This is the answer to "I trusted a whitelist and it silently re-enabled tracking".
+#
+# Only core, unambiguous infrastructure belongs here. Everything else stays releasable so a
+# legitimate false-positive report can still be fixed - a never-whitelist that swallows
+# everything is the same failure mode as no never-whitelist at all.
+#
+# One hostname per line, lowercase.
+
+doubleclick.net
+googleadservices.com
+googlesyndication.com
+googletagmanager.com
+google-analytics.com
+analytics.google.com
+adservice.google.com
+pagead2.googlesyndication.com
+adsystem.amazon.com
+amazon-adsystem.com
+adnxs.com
+adsrvr.org
+pubmatic.com
+rubiconproject.com
+openx.net
+criteo.com
+criteo.net
+taboola.com
+outbrain.com
+adroll.com
+casalemedia.com
+smartadserver.com
+teads.tv
+sharethrough.com
+33across.com
+bidswitch.net
+improvedigital.com
+yieldmo.com
+smaato.net
+mopub.com
+inmobi.com
+applovin.com
+unityads.unity3d.com
+vungle.com
+chartboost.com
+ironsrc.com
+adjust.com
+appsflyer.com
+branch.io
+kochava.com
+singular.net
+tenjin.io
+mixpanel.com
+amplitude.com
+segment.io
+segtag.com
+heapanalytics.com
+kissmetrics.com
+quantserve.com
+quantcount.com
+scorecardresearch.com
+comscore.com
+nielsen.com
+imrworldwide.com
+chartbeat.com
+parsely.com
+hotjar.com
+mouseflow.com
+crazyegg.com
+luckyorange.com
+fullstory.com
+inspectlet.com
+smartlook.com
+clicktale.net
+sessioncam.com
+adsafeprotected.com
+moatads.com
+doubleverify.com
+integrity.com
+adform.net
+bluekai.com
+krxd.net
+demdex.net
+everesttech.net
+omtrdc.net
+2o7.net
+adobedtm.com
+coinhive.com
+webminepool.com
+crypto-loot.com
+coin-have.com
+minero.cc
+deepmine.cc
+monerominer.rocks
+
+# ── China-specific tracking hosts ────────────────────────────────────────────────────────────
+# Entered as HOSTS, not registrable domains. That is the whole point of the priority rule: a
+# broad `@baidu.com` release keeps Baidu working, while `hm.baidu.com` - the endpoint the feeds
+# actually list, and the one that carries the page-visit beacon - is put back as a block rule.
+# Protecting the registrable domain instead would refuse the `@baidu.com` release outright and
+# break the service to keep one tracker blocked, which is the worse trade.
+#
+# Same reasoning for every entry below: the registrable domain stays releasable, the tracking
+# endpoint does not.
+hm.baidu.com
+pos.baidu.com
+analytics.163.com
+gdt.qq.com
+pingjs.qq.com
+ut.taobao.com
+ad.sina.com.cn
+sax.sina.com.cn
+log.mmstat.com
+

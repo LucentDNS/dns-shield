@@ -1,0 +1,30 @@
+{
+  "name": "dns-shield",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A curated, self-verifying DNS blocklist for ads, trackers, telemetry, phishing, malware and scam domains.",
+  "license": "GPL-3.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "fetch": "node tools/fetch.js",
+    "fetch:force": "node tools/fetch.js --force",
+    "build": "node tools/build.js",
+    "audit": "node tools/audit.js",
+    "benchmark": "node tools/benchmark.js",
+    "gap": "node tools/coverage-gap.js",
+    "sources": "node tools/gen-sources-doc.js",
+    "stats": "node tools/write-stats.js",
+    "serve": "node tools/serve-dist.js",
+    "probe": "node tools/dns-probe.js",
+    "agh": "node tools/agh-toggle.js",
+    "live": "node tools/agh-live-check.js",
+    "clean:live": "node tools/cleanup-live-check.js",
+    "pipeline": "node tools/fetch.js && node tools/build.js && node tools/audit.js && node tools/coverage-gap.js && node tools/benchmark.js && node tools/gen-sources-doc.js && node tools/write-stats.js",
+    "verify": "node tools/audit.js && node tools/coverage-gap.js && node tools/benchmark.js"
+  },
+  "devDependencies": {
+    "@adguard/hostlist-compiler": "^2.1.1"
+  }
+}

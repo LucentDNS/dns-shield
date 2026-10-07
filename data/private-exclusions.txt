@@ -1,0 +1,26 @@
+# Private exclusions - domains we refuse to block outright.
+#
+# Difference from data/whitelist.txt: a whitelist entry is a request ("release this"), while an
+# exclusion is applied to the compiled set before the whitelist stage and is meant for cases
+# where the whole class of traffic should never be blocked in the first place. In practice the
+# two overlap; use the whitelist for personal entries and this file for project-level policy.
+#
+# One hostname per line. `#` starts a comment.
+
+# RFC 2606 / RFC 6761 reserved names. They must resolve (or fail locally) for split-horizon
+# setups, and blocking them breaks local resolution rather than any advertiser.
+localhost
+localhost.localdomain
+local
+invalid
+test
+example
+example.com
+example.net
+example.org
+onion
+
+# mDNS / Bonjour / SSDP service discovery. These live on the LAN.
+local.
+in-addr.arpa
+ip6.arpa

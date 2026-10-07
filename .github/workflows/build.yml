@@ -1,0 +1,137 @@
+# Fetch, build, verify and publish the list.
+#
+# The workflow never publishes an unverified list: tools/audit.js and tools/coverage-gap.js both
+# exit non-zero when the product regresses, and they run before the commit step. A failing run
+# leaves the previously published file in place, so subscribers keep the last known-good list
+# instead of receiving a broken one.
+name: build
+
+on:
+  schedule:
+    # Daily at 03:17 UTC. Off the hour on purpose: GitHub's scheduled runners are heavily
+    # congested at :00, and a delayed start is the most common cause of a skipped cron run.
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+    inputs:
+      force_refetch:
+        description: 'Re-download every feed even if the cache looks fresh'
+        type: boolean
+        default: false
+  push:
+    branches: [main]
+    # A documentation-only change must not trigger a 10-minute feed download.
+    paths:
+      - 'tools/**'
+      - 'data/**'
+      - 'package.json'
+      - '.github/workflows/build.yml'
+
+# One publishing run at a time; a queued run supersedes a waiting one.
+concurrency:
+  group: build-list
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Restore feed cache
+        # Feed bodies change rarely; restoring them turns a cold 10-minute fetch into a warm
+        # 30-second build. `restore-keys` without a run-id suffix means the most recent cache is
+        # always reused, and a fresh one is written by the step below.
+        uses: actions/cache@v4
+        with:
+          path: .cache/sources
+          key: feeds-${{ github.run_id }}
+          restore-keys: |
+            feeds-
+
+      - name: Install hostlist-compiler
+        # The compiler is invoked through the HOSTLIST_COMPILER environment variable, so its
+        # location inside node_modules is resolved here rather than hard-coded in tools/build.js.
+        run: |
+          npm install --no-audit --no-fund
+          node -e "
+            const path = require('path');
+            const entry = require.resolve('@adguard/hostlist-compiler/src/index.js');
+            console.log('compiler entry:', entry);
+            require('fs').appendFileSync(process.env.GITHUB_ENV, 'HOSTLIST_COMPILER=' + entry + '\n');
+          "
+
+      - name: Fetch feeds
+        run: node tools/fetch.js ${{ inputs.force_refetch && '--force' || '' }}
+
+      - name: Build
+        env:
+          DNS_SHIELD_HOMEPAGE: ${{ github.server_url }}/${{ github.repository }}
+        run: node tools/build.js
+
+      - name: Audit
+        run: node tools/audit.js
+
+      - name: Coverage reconciliation
+        # Fails when a rule reaches the emitted set but not the published file, or when a peer rule
+        # is unaccounted for by any release path.
+        run: node tools/coverage-gap.js
+
+      - name: Capture the previously published list
+        # Must run before anything overwrites dist/, so the regression budget has a baseline. On a
+        # fresh checkout the file is absent and the check reports that it had nothing to compare.
+        run: |
+          if git cat-file -e "HEAD:dist/dns-shield.txt" 2>/dev/null; then
+            git show "HEAD:dist/dns-shield.txt" > dist/previous.txt
+            echo "baseline: HEAD:dist/dns-shield.txt"
+          else
+            echo "baseline: none (first publish)"
+          fi
+
+      - name: Regression budget
+        # Refuses a run that collapses coverage or lets the exception section run away. None of the
+        # checks above compare today's product against yesterday's.
+        run: node tools/ci-regression.js
+
+      - name: Benchmark
+        run: node tools/benchmark.js
+
+      - name: Product statistics
+        run: node tools/write-stats.js
+
+      - name: Regenerate source documentation
+        run: node tools/gen-sources-doc.js
+
+      - name: Publish
+        run: |
+          git config user.name  'dns-shield-bot'
+          git config user.email 'dns-shield-bot@users.noreply.github.com'
+          git add dist/dns-shield.txt dist/stats.json dist/benchmark.txt SOURCES.md SOURCES.zh-CN.md
+          if git diff --cached --quiet; then
+            echo 'no change to publish'
+            exit 0
+          fi
+          BLOCK=$(node -e "console.log(require('./dist/stats.json').blockRules.toLocaleString('en-US'))")
+          ALLOW=$(node -e "console.log(require('./dist/stats.json').allowRules)")
+          SIZE=$(node -e "console.log(require('./dist/stats.json').mib)")
+          git commit -m "build: ${BLOCK} block rules, ${ALLOW} exceptions, ${SIZE} MiB"
+          git push
+
+      - name: Fail loudly if a feed went missing
+        # A silently-missing feed is the one failure mode that produces a valid-looking but
+        # narrower list, so it is promoted to a hard error after the publish step.
+        run: |
+          if grep -q 'WARNING .*source(s) missing' dist/build.log; then
+            echo '::error::one or more feeds failed to download - see dist/build.log'
+            grep 'WARNING' dist/build.log
+            exit 1
+          fi

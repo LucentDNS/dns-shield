@@ -1,0 +1,286 @@
+# DNS Shield
+
+DNS Shield is a DNS-level blocklist for advertisements, trackers, telemetry beacons, phishing,
+malware and scam domains. It ships as one plain text file in AdGuard / DNS rule syntax only:
+`||domain^` block rules and `@@||domain^` exception rules, with no cosmetic rules, no scriptlets
+and no `$` modifiers. Because it contains nothing but domain rules, it is consumed by a DNS
+resolver rather than by a browser extension, and it works in AdGuard Home, AdGuard DNS, Pi-hole
+(after the usual hosts-format conversion), dnsmasq and blocky. The published file currently holds
+**517,007 block rules and 19 exception rules**, 11,758,480 bytes (11.21 MiB).
+
+## Why this list
+
+This is not a new detection engine, and it does not claim to find anything the upstream projects
+miss. It is a **curated union with a policy layer on top**, and it is honest about which part is
+which:
+
+- **Coverage comes from upstream.** Four well-maintained aggregate lists are used as a coverage
+  layer — OISD Big, HaGeZi's Pro, AdRules DNS List and AdGuard DNS filter — alongside twenty
+  single-topic feeds for abuse/phishing, ad and tracking servers, and China-specific telemetry
+  SDKs. Twenty-four blocking feeds in total, plus two AdGuard policy feeds (their exclusions and
+  their human-confirmed false positives). Each feed keeps its own licence and its own maintainers;
+  `tools/sources.js` records the origin, refresh cadence and risk note of every one.
+- **What this project adds is policy, not detection.** Three things the aggregate lists do not do
+  for themselves:
+  - a **never-whitelist** (`data/never-whitelist.txt`, 93 protected domains) so a whitelist can
+    never quietly re-enable a tracker;
+  - **infrastructure guards** (`data/guards.txt`, 135 shared CDN/hosting apexes) so one malicious
+    tenant does not take a whole platform down with it;
+  - **curated patch rules** (`data/extra-block.txt`, 3 entries) for hosts upstream only ever
+    publishes in a shape that does not survive normalisation.
+- **It measures itself instead of asserting.** `tools/benchmark.js` puts this list and the four
+  peers on one ruler, and `tools/audit.js` fails the build on a regression. The numbers from the
+  reference run (2026-10-07) are:
+
+  | Peer | Their rules | Share we also block |
+  | --- | --- | --- |
+  | OISD Big | 240,434 | 95.1% |
+  | HaGeZi's Pro | 198,605 | 94.5% |
+  | AdRules DNS List | 198,109 | 95.4% |
+  | AdGuard DNS filter | 178,197 | 96.8% |
+
+  Across the union of all four (541,509 rules), this list covers **95.5%**; 24,502 rules exist only
+  in those lists and not here. The remaining distance is explained, not hidden:
+  `tools/coverage-gap.js` classifies every un-carried peer rule as intended (covered by an ancestor
+  rule, or released by an exclusion, a guard, the whitelist or an exception) or as a bug, and for
+  all four peers the reference run reported `0 are defects` with the derived rule set reconciling
+  against the published file exactly.
+- **Over-blocking is measured too.** AdGuard's own 172 hand-written exceptions are used as an
+  independent ruler: each one is a host a human already proved broken. This list still blocks
+  **2** of them — `sax.sina.com.cn` and `log.mmstat.com`, both pinned deliberately in
+  `data/never-whitelist.txt` and `data/extra-block.txt` because they are telemetry endpoints. On
+  the same ruler AdGuard DNS filter blocks 23, AdRules DNS List 18, OISD Big 4 and HaGeZi's Pro 2.
+
+The tradeoff is real and worth stating plainly: 517,007 rules is more than twice OISD Big's
+240,434, and the file is 11.21 MiB. That makes this list a poor fit for a memory-constrained
+router or a phone on a metered connection. `dist/audit.log` also carries one standing warning:
+fourteen dual-use URL shorteners and DNS providers (bit.ly, tinyurl.com, adf.ly and similar) are
+blocked whole because abuse feeds list them; ordinary link sharing through those services breaks,
+and that is a deliberate decision recorded in the audit, not a silent side effect.
+
+## Quick start
+
+Subscribe to the raw file:
+
+```
+https://raw.githubusercontent.com/LucentDNS/dns-shield/main/dist/dns-shield.txt
+```
+
+> If you publish this under a different account, replace `LucentDNS/dns-shield` here, in the issue
+> link below, and set `DNS_SHIELD_HOMEPAGE` before building so the header in the emitted list points
+> at the right place.
+
+### AdGuard Home
+
+1. Open the dashboard and go to **Filters → DNS blocklists**.
+2. Click **Add blocklist**, then **Add a custom list**.
+3. Name it `DNS Shield`, paste the URL above into the list URL field, and save.
+4. AdGuard Home refreshes it on the schedule you configured for blocklists.
+
+### AdGuard DNS and the AdGuard apps
+
+Add the URL as a custom filter list wherever the product accepts a filter subscription by URL:
+in the AdGuard DNS dashboard, or under **Settings → Filters → Custom filters** in the AdGuard
+desktop and mobile apps. Because this list is DNS-syntax only, what you get is DNS-level blocking;
+the cosmetic element-hiding that the AdGuard browser extension does is not part of this list.
+
+### Pi-hole
+
+Pi-hole's gravity expects hosts format (`0.0.0.0 domain`), so convert the file first:
+
+```bash
+sed -e '/^!/d' -e '/^@@/d' -e 's/^||\(.*\)\^$/0.0.0.0 \1/' dns-shield.txt > dns-shield.hosts
+```
+
+Point Pi-hole at the resulting `dns-shield.hosts` (as a local list, or serve it over HTTP) and
+re-run gravity with `pihole -g`.
+
+Dropping the `@@||domain^` lines during conversion costs nothing: the build refuses to publish a
+domain in both sections, so every exception domain is absent from the block section already and
+simply stays unblocked.
+
+### Generic `||domain^` consumers (dnsmasq, blocky)
+
+A consumer that understands AdGuard/DNS domain rules — blocky, for example — can be pointed at the
+file or the URL directly. dnsmasq does not read this syntax; convert it the same way as for
+Pi-hole and load the result as an additional hosts file:
+
+```bash
+sed -e '/^!/d' -e '/^@@/d' -e 's/^||\(.*\)\^$/0.0.0.0 \1/' dns-shield.txt > dns-shield.hosts
+```
+
+```conf
+addn-hosts=/etc/dnsmasq.d/dns-shield.hosts
+```
+
+Be aware that a 517,007-line `addn-hosts` file is heavy for dnsmasq, which keeps hosts entries in
+memory — the same memory caveat that applies to a small router applies here.
+
+## What it blocks, and what it deliberately does not
+
+It blocks, at DNS level: advertising servers and ad exchanges; tracking, analytics and attribution
+endpoints; telemetry beacons; mobile in-app ad and analytics SDKs; cryptomining domains; phishing,
+malware distribution and scam domains; and the China-specific telemetry/ads SDK layer.
+
+It deliberately does **not**:
+
+- do cosmetic filtering — there are no element-hiding rules, because there is no page to modify;
+- ship scriptlets, `$modifier` rules, wildcards or regex rules — the audit fails the build if any
+  such shape reaches the file;
+- bypass HTTPS or DNS-over-HTTPS — it answers DNS queries, so an app that ships its own DoH/DoT
+  resolver, or connects to a hardcoded IP, is not affected by it at all;
+- provide client-side content rules — this is a resolver-side list, not a browser extension filter;
+- filter adult content — the feeds it composes do not include an adult list, so a subscriber who
+  wants that must add such a feed to their resolver themselves.
+
+## False positives
+
+If this list breaks a site or an app, please report it rather than silently living with it.
+
+1. **Report it.** Open an issue at <https://github.com/LucentDNS/dns-shield/issues> with the blocked
+   hostname, the site or app that broke, and the query as your resolver logged it. The fastest fix
+   upstream is a report with the exact hostname.
+2. **Or fix it locally** by editing `data/whitelist.txt`. Two syntaxes, deliberately different:
+
+   ```
+   domain.com     # release exactly this hostname; its subdomains stay blocked
+   @domain.com    # release the whole tree: the hostname and every subdomain
+   ```
+
+   `@` is blunt — it also releases every tracking subdomain under that name. Use it only where a
+   service genuinely moves its endpoints across unpredictable subdomains. Add personal entries at
+   the bottom of the file under `PERSONAL`. Then rebuild and re-run the audit.
+
+### Do not edit `data/never-whitelist.txt`
+
+`data/never-whitelist.txt` is the **protection set** (93 domains), not a list of suggestions. The
+build refuses, by design:
+
+- an exact whitelist rule naming a protected domain;
+- a whole-tree rule that contains a protected domain — the protected hosts are re-asserted
+  afterwards (in the reference build, 86 protected domains were re-blocked this way after the
+  whitelist stage released 2,860 domains);
+- an upstream exception naming, or contained in, a protected domain (the reference build refused
+  2 exceptions naming a protected domain and 12 more covered by the protection set).
+
+A whitelist is where a filter list quietly loses its value: one rule that releases a tracker is
+enough to make the whole protection layer meaningless. So a request to unblock one of these
+trackers is **refused by design, not by oversight**. If you need one of them reachable, you are
+asking to switch off the one guarantee this project makes, and the answer is to edit your own
+resolver rules rather than this file. The same applies to `data/extra-block.txt`, which pins the
+three hosts upstream publishes only as exception-shaped rules — `pagead2.googlesyndication.com`,
+`log.mmstat.com` and `sax.sina.com.cn`. Fix a false positive in `data/whitelist.txt`, never by
+deleting a line from the protection set.
+
+## Repository layout
+
+- `package.json` — npm scripts (`fetch`, `build`, `audit`, `gap`, `benchmark`, `pipeline`, `verify`,
+  plus `live` / `clean:live` for the live resolver check) and the `@adguard/hostlist-compiler`
+  devDependency; requires Node.js `>= 20`.
+- `tools/sources.js` — the source catalogue: 26 entries, being 24 blocking feeds plus the two
+  AdGuard policy feeds, each with its URL order, refresh cadence and risk note.
+- `tools/fetch.js` — downloads the catalogue with per-source retries and mirrors, and normalises
+  every feed to one hostname per line in `.cache/sources/<id>.txt`.
+- `tools/build.js` — the pipeline: compile the blocking feeds, then apply the exclusion, guard,
+  whitelist, never-whitelist and exception layers, then emit the list and `dist/build.log`.
+- `tools/audit.js` — nine checks (syntax, hygiene, must-block, must-stay-reachable, shared apexes,
+  dual-use, whitelist effect, protection set, inert entries); writes `dist/audit.log` and exits
+  non-zero on any failure.
+- `tools/coverage-gap.js` — explains every peer rule this list does not carry, buckets each one as
+  intended or as a bug, and reconciles the derived rule set against the published file; exits
+  non-zero on a defect.
+- `tools/benchmark.js` — measures coverage and over-blocking against the four peers and the
+  AdGuard exception ruler; writes `dist/benchmark.txt`.
+- `tools/ci-regression.js` — compares a new build against the previously published one and fails on
+  an implausible swing in rule count, exception count or file size.
+- `tools/write-stats.js` — writes `dist/stats.json` (counts, size, feed count, SHA-256) from the
+  published file, so CI, the commit message and the regression check agree on the numbers.
+- `tools/gen-sources-doc.js` — generates `SOURCES.md` and `SOURCES.zh-CN.md` from the catalogue.
+- `tools/agh-live-check.js`, `tools/agh-toggle.js`, `tools/dns-probe.js`, `tools/serve-dist.js`,
+  `tools/cleanup-live-check.js` — the live-verification kit: serve `dist/` over HTTP, drive an
+  AdGuard Home over its API, query it for real, then clean up. Not part of a normal build.
+- `data/whitelist.txt` — the private whitelist, 69 exact and 286 whole-tree entries in the
+  reference build.
+- `data/never-whitelist.txt` — the protection set, 93 domains that no whitelist may release.
+- `data/guards.txt` — 135 shared-infrastructure apexes; the apex is released, its subdomains are
+  not.
+- `data/private-exclusions.txt` — 13 project-level exclusions (reserved names such as `localhost`,
+  `invalid`, `onion` and the reverse-DNS zones) applied before the whitelist stage.
+- `data/extra-block.txt` — the curated patch file, 3 rules.
+- `dist/dns-shield.txt` — the published product: 517,007 block rules, 19 exception rules, 11.21 MiB.
+- `dist/build.log`, `dist/audit.log`, `dist/benchmark.txt`, `dist/stats.json` — logs and summary
+  from the reference build.
+- `dist/.compiled.raw` — the compiler's intermediate output, reused by `--no-compile`.
+- `.cache/sources/` — the 26 cached feeds, one hostname per line; all network input lands here and
+  nothing else does.
+
+## Building it yourself
+
+Requirements: Node.js 20 or newer (`package.json`). The reference build ran on Node v24.21.0
+(`dist/build.log`).
+
+```bash
+npm install
+node tools/fetch.js          # cold run: about 10 minutes - 26 sources, retries and mirrors
+node tools/build.js          # about 30 seconds from cache (reference: 31.6s, of which 19.0s compiling)
+node tools/audit.js          # must end with "failures 0"
+node tools/coverage-gap.js   # must reconcile the derived set against the published file
+node tools/benchmark.js      # refreshes dist/benchmark.txt; needs network access to the peers
+node tools/write-stats.js    # refreshes dist/stats.json from the list that was just built
+```
+
+`npm run pipeline` runs fetch, build, audit, coverage-gap, benchmark, the source documentation and
+stats in sequence. `tools/fetch.js` only understands `--force` — its default behaviour is already to
+reuse any cached feed body larger than 20 bytes, so there is no `--missing` to pass.
+`node tools/build.js --no-compile` reuses `dist/.compiled.raw`; `node tools/build.js --out <path>`
+writes the list somewhere else.
+
+The cold/warm difference is entirely in the fetch stage. A cached build never touches the network:
+`tools/build.js` points `hostlist-compiler` at the cached files, so one flaky feed degrades to
+"one source reported missing" instead of aborting the run. Run `tools/fetch.js` first whenever the
+cache is empty or stale.
+
+### Checking it against a live resolver
+
+The static checks compare rule text against rule text. `tools/agh-live-check.js` goes further and
+asks a running AdGuard Home whether it actually filters the hostnames a browser would ask for. It
+expects a throwaway instance on `127.0.0.1:13000` (DNS on `15353`) and the list served locally by
+`tools/serve-dist.js` on port 8123; `ARCHITECTURE.md` ("Live verification") has the full recipe.
+Point it at any instance with `AGH_BASE`, `AGH_USER` and `AGH_PASS`. `node tools/cleanup-live-check.js`
+removes the scratch files afterwards.
+
+Two machine-specific knobs are worth knowing about:
+
+- `tools/build.js` resolves `@adguard/hostlist-compiler` from a global npm path by default. After
+  `npm install`, point it at the local copy instead — PowerShell:
+  `$env:HOSTLIST_COMPILER="$PWD\node_modules\@adguard\hostlist-compiler\src\index.js"`, or cmd:
+  `set HOSTLIST_COMPILER=%CD%\node_modules\@adguard\hostlist-compiler\src\index.js`.
+- `DNS_SHIELD_HOMEPAGE`, `DNS_SHIELD_NAME` and `DNS_SHIELD_VERSION` are written into the header of
+  the emitted file. The fallback homepage is `https://github.com/LucentDNS/dns-shield`; set
+  `DNS_SHIELD_HOMEPAGE` to your real repository URL before publishing, so the header tells
+  subscribers where the list actually lives.
+- `tools/fetch.js` and `tools/benchmark.js` prefer the local resolvers `127.0.0.1` and
+  `192.168.3.1` before falling back to the system resolver. If your network differs, edit the
+  `DNS_SERVERS` constant in those two files.
+
+## Verified environment
+
+The list has been verified end to end in exactly one environment: a Windows machine running AdGuard
+Home (web interface at 127.0.0.1:3000, DNS on port 53), Node v24.21.0, reference build and benchmark
+dated 2026-10-07. On 2026-10-07 the published list was also loaded into an isolated AdGuard Home
+v0.107.79 and queried for real: 21 of 25 probe hostnames were filtered at DNS level, and AdGuard's
+own rule attribution named the expected rule for each one. The four that resolved are the intended
+allows (`github.io` guard, `www.qq.com` and `raw.githubusercontent.com` whitelist, `sentry.io` absent
+from every feed).
+
+It has **not** been tested on hardware it was not tested on: no router, no phone, no Pi-hole or
+dnsmasq deployment is part of the verification. What is verified for those platforms is only the
+syntax — the audit proves every rule is `||domain^` or `@@||domain^`, with no literal-IP rules, no
+wildcards, no modifiers and pure ASCII, which is what makes the hosts conversion in the quick start
+a mechanical step rather than a bet.
+
+## Licence
+
+GPL-3.0 — declared in `package.json`, in the header of `dist/dns-shield.txt`, and included in full
+as `LICENSE` at the repository root. Each upstream feed keeps its own licence and is credited in
+`tools/sources.js`.

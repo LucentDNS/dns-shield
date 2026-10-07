@@ -1,0 +1,10 @@
+# Keep the payload byte-stable whatever machine checks it out.
+#
+# dist/dns-shield.txt is the published artifact: subscribers download these exact bytes and its
+# SHA-256 is recorded in dist/stats.json. A CRLF checkout would change that digest, so every text
+# file is normalised to LF in the repository and left alone in the working tree.
+* text=auto eol=lf
+
+# The published list and the CI workflow are read by machines, not editors: never rewrite them.
+dist/*.txt text eol=lf
+.github/workflows/*.yml text eol=lf
