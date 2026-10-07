@@ -58,8 +58,8 @@
 
 | id | Feed 名称 | 上游 URL | 格式 | 刷新 | 用途 | 风险说明 |
 | --- | --- | --- | --- | --- | --- | --- |
-| `urlhaus-domains` | URLhaus malicious domain feed (abuse.ch)（562 条） | urlhaus.abuse.ch/downloads/text_online/ | 完整 URL（text_online），每行一条 | realtime | 当前活跃的恶意软件分发站点；抓取时只保留主机名。 | 是完整 URL 而不是主机名——必须先规范化。这类主机寿命很短，某个域名过一阵就会自然消失。 |
-| `urlhaus-hostfile` | URLhaus hosts-format feed (abuse.ch)（396 条） | urlhaus.abuse.ch/downloads/hostfile/ | hosts 格式 | realtime | 同一份 abuse.ch 数据的 hosts 版本，作为同一主题的第二次覆盖。 | 低。与域名版 feed 有重叠；保留它是因为格式不同，偶尔还能互补。 |
+| `urlhaus-domains` | URLhaus malicious domain feed (abuse.ch)（576 条） | urlhaus.abuse.ch/downloads/text_online/ | 完整 URL（text_online），每行一条 | realtime | 当前活跃的恶意软件分发站点；抓取时只保留主机名。 | 是完整 URL 而不是主机名——必须先规范化。这类主机寿命很短，某个域名过一阵就会自然消失。 |
+| `urlhaus-hostfile` | URLhaus hosts-format feed (abuse.ch)（408 条） | urlhaus.abuse.ch/downloads/hostfile/ | hosts 格式 | realtime | 同一份 abuse.ch 数据的 hosts 版本，作为同一主题的第二次覆盖。 | 低。与域名版 feed 有重叠；保留它是因为格式不同，偶尔还能互补。 |
 | `phishing-army` | Phishing Army extended blocklist（144,243 条） | phishing.army/download/phishing_army_blocklist_extended.txt | 纯域名，每行一条 | several times daily | 规模较大的钓鱼黑名单，extended 变体包含了顶级域名条目。 | extended 变体包含顶级域名条目；有少量处在合法边界上的注册。 |
 | `openphish` | OpenPhish live phishing feed（259 条） | openphish.com/feed.txt | 完整 URL，每行一条 | realtime (delayed free tier) | 免费通道的实时钓鱼 URL；抓取时只保留主机名。 | 免费档只是约 300 条、有延迟的样本，不是完整 feed。 |
 | `spam404` | Spam404 domain blacklist（8,140 条） | ghproxy.net/https://raw.githubusercontent.com/Spam404/lists/master/main-blacklist.txt<br>gh-proxy.com/https://raw.githubusercontent.com/Spam404/lists/master/main-blacklist.txt<br>cdn.statically.io/gh/Spam404/lists/master/main-blacklist.txt<br>raw.githubusercontent.com/Spam404/lists/master/main-blacklist.txt | hosts / 纯域名 | weekly | 域名抢注垃圾与论坛垃圾注册来源。 | 低。稳定的抢注/垃圾注册域名。 |
@@ -81,7 +81,7 @@
 | `easyprivacy-thirdparty` | EasyPrivacy third-party requests（1,909 条） | ghproxy.net/https://raw.githubusercontent.com/easylist/easylist/master/easyprivacy/easyprivacy_thirdparty.txt<br>gh-proxy.com/https://raw.githubusercontent.com/easylist/easylist/master/easyprivacy/easyprivacy_thirdparty.txt<br>cdn.statically.io/gh/easylist/easylist/master/easyprivacy/easyprivacy_thirdparty.txt<br>raw.githubusercontent.com/easylist/easylist/master/easyprivacy/easyprivacy_thirdparty.txt | adblock | weekly | 加载追踪脚本的第三方请求，范围比纯追踪文件宽。 | 中。部分条目处在统计上报与 CDN 的边界上。 |
 | `adguard-trackers` | AdGuard Tracking Protection - third-party tracking networks（4,214 条） | adguardteam.github.io/AdguardFilters/SpywareFilter/sections/tracking_servers.txt | adblock | weekly | 第三方追踪网络；上游按政策只收录整域规则。 | 低。上游按政策把这份文件限制为整域规则。 |
 | `adguard-mobile-trackers` | AdGuard Tracking Protection - in-app analytics and spyware（1,156 条） | adguardteam.github.io/AdguardFilters/SpywareFilter/sections/mobile.txt | adblock | weekly | 移动 SDK 的应用内统计与间谍软件端点。 | 低。移动 SDK 端点。 |
-| `easylist-adservers` | EasyList advertising servers（45,632 条） | ghproxy.net/https://raw.githubusercontent.com/easylist/easylist/master/easylist/easylist_adservers.txt<br>gh-proxy.com/https://raw.githubusercontent.com/easylist/easylist/master/easylist/easylist_adservers.txt<br>cdn.statically.io/gh/easylist/easylist/master/easylist/easylist_adservers.txt<br>raw.githubusercontent.com/easylist/easylist/master/easylist/easylist_adservers.txt | adblock | weekly | 广告服务器；广告与追踪器这一层里条目最多的单一来源。 | 本层条目最多的来源。上游偶尔会分错类，所以出问题时这里是第一个该查的地方。 |
+| `easylist-adservers` | EasyList advertising servers（45,640 条） | ghproxy.net/https://raw.githubusercontent.com/easylist/easylist/master/easylist/easylist_adservers.txt<br>gh-proxy.com/https://raw.githubusercontent.com/easylist/easylist/master/easylist/easylist_adservers.txt<br>cdn.statically.io/gh/easylist/easylist/master/easylist/easylist_adservers.txt<br>raw.githubusercontent.com/easylist/easylist/master/easylist/easylist_adservers.txt | adblock | weekly | 广告服务器；广告与追踪器这一层里条目最多的单一来源。 | 本层条目最多的来源。上游偶尔会分错类，所以出问题时这里是第一个该查的地方。 |
 | `easylist-thirdparty` | EasyList third-party advertising（1,471 条） | ghproxy.net/https://raw.githubusercontent.com/easylist/easylist/master/easylist/easylist_thirdparty.txt<br>gh-proxy.com/https://raw.githubusercontent.com/easylist/easylist/master/easylist/easylist_thirdparty.txt<br>cdn.statically.io/gh/easylist/easylist/master/easylist/easylist_thirdparty.txt<br>raw.githubusercontent.com/easylist/easylist/master/easylist/easylist_thirdparty.txt | adblock | weekly | 第三方广告规则。 | 低。 |
 | `adguard-adservers` | AdGuard Base filter - third-party advertising networks（1,203 条） | adguardteam.github.io/AdguardFilters/BaseFilter/sections/adservers.txt | adblock | weekly | 第三方广告网络，只保留整域规则。 | 低。上游政策把这份文件限制为整域规则。 |
 | `adguard-foreign` | AdGuard Base filter - language-neutral advertising rules（162 条） | adguardteam.github.io/AdguardFilters/BaseFilter/sections/foreign.txt | adblock，大多不是域名规则 | weekly | 语言无关的广告规则；规范化之后只剩域名级规则，产出很少。 | 上游的混合文件；规范化之后只有域名级规则能留下，所以产出很少。 |
@@ -153,10 +153,10 @@
 
 | id | Feed 名称 | 上游 URL | 格式 | 刷新 | 用途 | 风险说明 |
 | --- | --- | --- | --- | --- | --- | --- |
-| `oisd-big` | OISD Big（240,418 条） | adguardteam.github.io/HostlistsRegistry/assets/filter_27.txt | hosts 与 adblock 混合，已编译 | daily | 覆盖上限之一：四份聚合清单加起来能覆盖的部分。 | 聚合清单。四份里收得最宽的一份；也最容易带上边界域名，因为它只要有可信报告就收。 |
+| `oisd-big` | OISD Big（240,439 条） | adguardteam.github.io/HostlistsRegistry/assets/filter_27.txt | hosts 与 adblock 混合，已编译 | daily | 覆盖上限之一：四份聚合清单加起来能覆盖的部分。 | 聚合清单。四份里收得最宽的一份；也最容易带上边界域名，因为它只要有可信报告就收。 |
 | `hagezi-pro` | HaGeZi's Pro Blocklist（198,605 条） | adguardteam.github.io/HostlistsRegistry/assets/filter_48.txt | hosts 与 adblock 混合，已编译 | daily | 在广告、追踪和滥用之间取平衡，刻意不选最激进的那一档。 | 聚合清单。在广告、追踪和滥用之间取平衡，其 "Pro" 档刻意不是最激进的那一档。 |
 | `adrules-dns` | AdRules DNS List（198,109 条） | adguardteam.github.io/HostlistsRegistry/assets/filter_29.txt | hosts 与 adblock 混合，已编译 | daily | 四份聚合清单里国内规则占比最高的一份。 | 聚合清单，国内覆盖较好。中文地区规则的占比高于另外三份。 |
-| `adguard-dns-filter` | AdGuard DNS filter（178,228 条） | adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt | adblock，已编译 | daily | 偏保守的聚合清单；AdGuard 把不少广告域名留给浏览器扩展处理。 | 由 AdGuard 维护的聚合清单。刻意保守——把不少广告域名留给自家的浏览器扩展——所以按设计它就是四份里收得最窄的。 |
+| `adguard-dns-filter` | AdGuard DNS filter（178,250 条） | adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt | adblock，已编译 | daily | 偏保守的聚合清单；AdGuard 把不少广告域名留给浏览器扩展处理。 | 由 AdGuard 维护的聚合清单。刻意保守——把不少广告域名留给自家的浏览器扩展——所以按设计它就是四份里收得最窄的。 |
 
 已抓取: 4/4。条目数是最近一次抓取到 .cache/sources/ 的行数，运行时可能变化。
 
@@ -199,7 +199,7 @@
 `adguardteam.github.io` 的来源则直接抓取，因为那个 CDN 稳定，不需要在前面套镜像。
 
 覆盖层同时也是本项目的对标对象，具体数字见 [`dist/benchmark.txt`](dist/benchmark.txt)：
-AdGuard DNS filter 178,228 条、HaGeZi's Pro 198,605 条、OISD Big 240,418 条、AdRules DNS List 198,109 条、AdGuard DNS filter 23 条、HaGeZi's Pro 2 条、OISD Big 4 条、AdRules DNS List 18 条。
+AdGuard DNS filter 178,250 条、HaGeZi's Pro 198,605 条、OISD Big 240,439 条、AdRules DNS List 198,109 条、AdGuard DNS filter 23 条、HaGeZi's Pro 2 条、OISD Big 4 条、AdRules DNS List 18 条。
 
 ## 如何新增一个 feed
 
