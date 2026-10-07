@@ -346,12 +346,16 @@ recovers exactly what merging lost and nothing more. Measured effect: +20,273 ru
 four reference lists rising from 95.5% to 98.9% of their union, and the count of rules that all four
 carry and we do not falling from 1,950 to 1,763.
 
-That residue is a policy outcome, not a compile defect. 1,378 of the 1,763 are `*.cloudfront.net`
-distributions, and every one of them sits under a `data/whitelist.txt` whole-tree entry
-(`@cloudfront.net`, `@amazonaws.com`, `@baidu.com`, `@qq.com` …) that exists so ordinary sites on
-those shared platforms resolve. The restore puts those names back into the blocked set, and the
-whitelist then releases them on purpose. Closing the residue would mean narrowing those trees and
-accepting the breakage they were added to prevent, so it is left as an explicit, measured tradeoff.
+That residue is a policy outcome, not a compile defect. Of the 23,394 hostnames the restore puts
+back, **20,277 reach the published file** and 3,117 are released again - and the release is
+overwhelmingly one platform: `cloudfront.net` accounts for 1,971 of them and `amazonaws.com` for
+862, while no other parent accounts for more than 71 (`qq.com` 71, `microsoft.com` 42, `youku.com`
+23). 1,378 of the 1,763 rules all four reference lists carry are `*.cloudfront.net` distributions,
+and every one of them sits under a `data/whitelist.txt` whole-tree entry (`@cloudfront.net`,
+`@amazonaws.com`, `@baidu.com`, `@qq.com` …) that exists so ordinary sites on those shared platforms
+resolve. The restore puts those names back into the blocked set, and the whitelist then releases them
+on purpose. Closing the residue would mean narrowing those trees and accepting the breakage they were
+added to prevent, so it is left as an explicit, measured tradeoff.
 
 ## Known limitations
 

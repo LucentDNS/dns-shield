@@ -28,7 +28,9 @@ See `ARCHITECTURE.md` ("Reproducible output") for how both values are derived.
   Merging-then-restoring and compiling every feed separately converge on the identical rule set.
   Effect: **+20,273 rules** (516,987 → 537,260), coverage of the four reference lists rising from
   95.5% to 98.9% of their union, and rules carried by all four peers that we lack falling from
-  1,950 to 1,763. See `ARCHITECTURE.md` ("Cross-feed compression").
+  1,950 to 1,763. Of the 23,394 hostnames restored, 20,277 reach the published file; the 3,117 that
+  are then released are `cloudfront.net` (1,971) and `amazonaws.com` (862) with a tail under 71. See
+  `ARCHITECTURE.md` ("Cross-feed compression").
 - **`tools/coverage-gap.js` replays the restore.** Its model previously derived the emitted set as
   "compiled minus releases" and reported the restored names as 20,275 unmodelled rules. It now reads
   `dist/.perfeed.raw` and runs the restored names through the same release tests the build does, so
