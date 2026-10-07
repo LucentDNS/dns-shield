@@ -111,11 +111,16 @@ jobs:
       - name: Regenerate source documentation
         run: node tools/gen-sources-doc.js
 
+      - name: Regenerate the referral-gap report
+        # Documents what an allowlist filter would release from the list being published. Generated
+        # rather than written by hand so it cannot drift away from the rules it describes.
+        run: node tools/referral-gaps.js
+
       - name: Publish
         run: |
           git config user.name  'dns-shield-bot'
           git config user.email 'dns-shield-bot@users.noreply.github.com'
-          git add dist/dns-shield.txt dist/stats.json dist/benchmark.txt SOURCES.md SOURCES.zh-CN.md
+          git add dist/dns-shield.txt dist/stats.json dist/benchmark.txt SOURCES.md SOURCES.zh-CN.md REFERRAL-GAPS.md
           if git diff --cached --quiet; then
             echo 'no change to publish'
             exit 0

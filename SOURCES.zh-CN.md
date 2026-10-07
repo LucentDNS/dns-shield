@@ -3,10 +3,13 @@
 本文件由 [`tools/gen-sources-doc.js`](tools/gen-sources-doc.js) 从 [`tools/sources.js`](tools/sources.js) 生成，请勿手工修改。
 要增删或修改某个 feed，改目录文件即可，目录是唯一的权威清单。英文版见 [`SOURCES.md`](SOURCES.md)。
 
-目录中的层数：**6**。目录条目总数：**26**，其中 **24 条为拦截 feed 条目**
+目录中的层数：**7**。参与构建的目录条目总数：**26**，其中 **24 条为拦截 feed 条目**
 （安全、广告与追踪器、中国区遥测，以及四份已编译的聚合覆盖清单），另有 **2 条策略条目**
 （上游排除清单与上游例外清单）。策略条目不参与拦截，它们是在拦截层编译完成之后，
 以集合运算的方式施加的。
+
+另有一条（`allowlist-referral`，共 1 条）会被抓取但不参与编译：它存在的唯一目的是
+让返利报告能在任何机器上重新生成。它不计入任何其他地方，也永远不会进入发布产物。
 
 | 层 | 条目数 | 作用 |
 | --- | --- | --- |
@@ -16,6 +19,7 @@
 | `exclusions` | 1 | 策略，删除拦截规则 |
 | `exceptions` | 1 | 策略，新增放行规则 |
 | `coverage` | 4 | 拦截，但属于上游已编译的聚合清单 |
+| `reference` | 1 | 仅供参照，抓取用来出报告，绝不参与编译 |
 
 ## 来源政策
 
@@ -154,6 +158,20 @@
 | `adguard-dns-filter` | AdGuard DNS filter（178,197 条） | adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt | adblock，已编译 | daily | 偏保守的聚合清单；AdGuard 把不少广告域名留给浏览器扩展处理。 | Aggregated compilation maintained by AdGuard. Deliberately conservative - it leaves many ad hosts to its browser extension - so it is the narrowest of the four by design. |
 
 已抓取: 4/4。条目数是最近一次抓取到 .cache/sources/ 的行数，运行时可能变化。
+
+直接抓取：adguardteam.github.io 这个 CDN 一直可用，所以不套镜像。
+
+### 仅供参照 —— 抓取是为了生成报告，绝不参与编译
+
+这是别人会去安装的白名单。AdGuard Home 是用白名单覆盖黑名单的，所以一旦装上它，不管启用哪几条黑名单，都会有几百条本列表拦截的域名被放行。抓取它只为了让 REFERRAL-GAPS.md 能在任何机器上重新生成；它不参与任何计数，也不会进入发布产物。
+
+本层条目: 1
+
+| id | Feed 名称 | 上游 URL | 格式 | 刷新 | 用途 | 风险说明 |
+| --- | --- | --- | --- | --- | --- | --- |
+| `allowlist-referral` | HaGeZi's Allowlist Referral (reference only)（936 条）（mode: `allow`） | adguardteam.github.io/HostlistsRegistry/assets/filter_45.txt | ||domain|| 放行规则，含通配符 | weekly | 不是本项目的 feed。这是别人会安装的白名单，抓取它只为了让 REFERRAL-GAPS.md 能在任何机器上重新生成，绝不参与编译。 | None to this list - it is never compiled in. It is here because AdGuard Home applies allowlist filters OVER blocklists, so installing it releases 273 of our blocked hostnames (including adjust.com, appsflyer.com and amazon-adsystem.com) no matter which blocklists are enabled. tools/whitelist-impact.js measures it; tools/referral-gaps.js documents it. |
+
+已抓取: 1/1。条目数是最近一次抓取到 .cache/sources/ 的行数，运行时可能变化。
 
 直接抓取：adguardteam.github.io 这个 CDN 一直可用，所以不套镜像。
 

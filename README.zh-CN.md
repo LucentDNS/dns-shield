@@ -66,6 +66,30 @@ https://raw.githubusercontent.com/LucentDNS/dns-shield/main/dist/dns-shield.txt
 3. 命名为 `DNS Shield`，把上面的 URL 粘贴到列表地址栏并保存。
 4. AdGuard Home 会按你为屏蔽列表配置的周期自动刷新。
 
+### 信任它之前，先检查你的白名单
+
+AdGuard Home 是**用白名单过滤器去覆盖黑名单**的。你安装的任何白名单里只要有一条 `@@` 规则，就能
+穿透本列表——不管当前启用了哪几条黑名单；而且**关掉黑名单并不会关掉白名单**。一个实测数字：
+HaGeZi's Allowlist Referral（用来让联盟/返利链接能正常跳转的那条）会从本列表中释放 273 个主机名、
+覆盖 250 个可注册域，其中包含 `adjust.com`、`appsflyer.com`、`a9.com`、`ad.doubleclick.net`、
+`adform.net` 和 `amazon-adsystem.com`。
+
+两个工具把这件事从"看不见"变成"看得见"：
+
+```bash
+node tools/whitelist-impact.js <白名单文件>   # 这条白名单开出了多少个洞？
+node tools/referral-gaps.js                   # 生成带注释的 REFERRAL-GAPS.md
+```
+
+`REFERRAL-GAPS.md` 按可注册域分组列出每一个被释放的主机名，并对属于广告/归因基础设施的那些加上
+说明，同时列出覆盖了拦截项的通配符规则。如果你只是想让某个返利域名可用，更稳妥的做法是把你自己的
+解析器用户规则里加上那一个主机，而不是安装一条会释放几百个追踪器的白名单：
+
+```yaml
+user_rules:
+  - '@@||adjust.com^'   # 只有在你确实需要 Adjust SDK 能解析时才加
+```
+
 ### AdGuard DNS 与 AdGuard 应用
 
 在产品支持“按 URL 订阅过滤器”的地方把这个地址添加为自定义过滤器列表即可：在 AdGuard DNS 面板中，
@@ -152,9 +176,9 @@ SDK；挖矿域名；钓鱼、恶意软件分发与诈骗域名；以及中国�
 
 ## 仓库结构
 
-- `package.json` — npm 脚本（`fetch`、`build`、`audit`、`gap`、`benchmark`、`pipeline`、`verify`，
-  以及用于实机验证的 `live` / `clean:live`）与 `@adguard/hostlist-compiler` 开发依赖；
-  要求 Node.js `>= 20`。
+- `package.json` — npm 脚本（`fetch`、`build`、`audit`、`gap`、`benchmark`、`stats`、`sources`、
+  `pipeline`、`verify`、`referral-gaps`、`whitelist-impact`，以及用于实机验证的 `live` /
+  `clean:live`）与 `@adguard/hostlist-compiler` 开发依赖；要求 Node.js `>= 20`。
 - `tools/sources.js` — 订阅源目录：共 26 项，即 24 个屏蔽类订阅源加上 AdGuard 的两份策略源，
   每项都记录了 URL 顺序、更新频率和风险说明。
 - `tools/fetch.js` — 带逐源重试与镜像地下载目录中的订阅源，并把每个订阅源规范化为
@@ -175,6 +199,10 @@ SDK；挖矿域名；钓鱼、恶意软件分发与诈骗域名；以及中国�
 - `tools/agh-live-check.js`、`tools/agh-toggle.js`、`tools/dns-probe.js`、`tools/serve-dist.js`、
   `tools/cleanup-live-check.js` — 实机验证工具组：通过 HTTP 提供 `dist/`，用 API 驱动一个
   AdGuard Home，做真实查询，最后清理。不属于常规构建流程。
+- `tools/whitelist-impact.js` — 给定一个白名单文件，报告它会释放多少条被拦主机名、哪些可注册域
+  因此失去保护。白名单文件与列表文件都可指定，因此可以在安装某条外部白名单**之前**先评估它。
+- `tools/referral-gaps.js` — 针对 HaGeZi's Allowlist Referral 生成带注释的 `REFERRAL-GAPS.md`；
+  加 `--check` 只校验文档是否最新，不写文件。
 - `data/whitelist.txt` — 私有白名单，参考构建中为 69 条精确条目和 286 条整树条目。
 - `data/never-whitelist.txt` — 保护集，93 个任何白名单都不得放行的域名。
 - `data/guards.txt` — 135 个共享基础设施顶级域名；只放行顶级域名本身，子域名不放行。
@@ -182,6 +210,7 @@ SDK；挖矿域名；钓鱼、恶意软件分发与诈骗域名；以及中国�
   反向解析域），在白名单阶段之前生效。
 - `data/extra-block.txt` — 人工补丁文件，3 条规则。
 - `dist/dns-shield.txt` — 发布产物：517,007 条屏蔽规则、19 条例外规则、11.21 MiB。
+- `REFERRAL-GAPS.md` — 自动生成：一条白名单过滤器会从发布文件中释放哪些域名。
 - `dist/build.log`、`dist/audit.log`、`dist/benchmark.txt`、`dist/stats.json` — 参考构建产生的日志与
   统计摘要。
 - `dist/.compiled.raw` — 编译器的中间输出，供 `--no-compile` 复用。
@@ -200,12 +229,17 @@ node tools/audit.js          # 必须以 "failures 0" 结束
 node tools/coverage-gap.js   # 必须让推导出的规则集与发布文件对账一致
 node tools/benchmark.js      # 刷新 dist/benchmark.txt；需要能访问同类列表的网络
 node tools/write-stats.js    # 根据刚构建的列表刷新 dist/stats.json
+node tools/referral-gaps.js  # 刷新 REFERRAL-GAPS.md；加 --check 则只校验不写
 ```
 
-`npm run pipeline` 会依次执行 fetch、build、audit、coverage-gap、benchmark、订阅源文档生成和统计。
-`tools/fetch.js` 只认 `--force`：它的默认行为本来就是复用任何大于 20 字节的缓存文件，因此并没有
-`--missing` 这个参数。`node tools/build.js --no-compile` 复用 `dist/.compiled.raw`；
-`node tools/build.js --out <path>` 把列表写到其他位置。
+`npm run pipeline` 会依次执行 fetch、build、audit、coverage-gap、benchmark、订阅源文档生成、统计
+和返利漏洞报告。`tools/fetch.js` 只认 `--force`：它的默认行为本来就是复用任何大于 20 字节的缓存
+文件，因此并没有 `--missing` 这个参数。`node tools/build.js --no-compile` 复用
+`dist/.compiled.raw`；`node tools/build.js --out <path>` 把列表写到其他位置。
+
+发布文件是字节可复现的。里面的 `! Last modified:` 不是墙上时间：构建时用最后一个提交的时间戳写入，
+所以同一个提交构建两次得到的字节完全相同，`dist/stats.json` 里的 `sha256` 也就有了意义。可以设置
+`SOURCE_DATE_EPOCH` 指定任意固定时刻来覆盖它，这正是可复现构建工具链所期望的做法。
 
 冷启动与热构建的差别完全在抓取阶段。命中缓存的构建不访问网络：`tools/build.js` 让
 `hostlist-compiler` 读取缓存文件，因此某个订阅源不稳定只会退化为“报告一个源缺失”，而不会中断整次
@@ -244,6 +278,25 @@ node tools/write-stats.js    # 根据刚构建的列表刷新 dist/stats.json
 对这些平台而言，被验证的只是语法——审计证明每条规则都是 `||domain^` 或 `@@||domain^`，没有字面
 IP 规则、没有通配符、没有修饰符，且为纯 ASCII，正因如此，快速开始里的 hosts 转换才是一步机械
 操作，而不是一次赌博。
+
+### 一次真实部署带来的教训
+
+随后本列表在同一台机器上正式投用，作为**唯一启用**的黑名单，原有的五条黑名单全部关闭。同样的 25
+个主机名再次对真实解析器做了探测，其中一个的表现与隔离测试不同：`app.adjust.com` 没有被拦而是正常
+解析。AdGuard Home 的 `check_host` 用一行给出了原因——
+
+```
+reason=NotFilteredWhiteList   rule=@@||app.adjust.com^
+```
+
+——它指出的那条例外**并不在发布文件里**（`grep -F '@@||app.adjust.com^'` 在那里找不到任何东西；构建
+日志显示的恰恰相反：`refused 12 upstream exception(s) covered by the never-whitelist`）。这条规则
+来自一条已安装的**白名单过滤器** HaGeZi's Allowlist Referral，它的用途是让联盟/返利链接能正常跳转。
+那是一个独立的开关：关掉全部黑名单并不会关掉它，而它会从本列表中释放 273 个主机名。
+
+关掉它之后，探测结果是 25 个中 22 个被过滤，3 个正常解析均为有意放行。这个教训比修复本身更有价值：
+在解析器上，**黑名单并不是故事的全部**——在下结论说列表没生效之前，先用
+`tools/whitelist-impact.js` 审计一遍你的白名单。
 
 ## 许可协议
 

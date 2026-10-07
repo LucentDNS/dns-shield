@@ -77,6 +77,32 @@ https://raw.githubusercontent.com/LucentDNS/dns-shield/main/dist/dns-shield.txt
 3. Name it `DNS Shield`, paste the URL above into the list URL field, and save.
 4. AdGuard Home refreshes it on the schedule you configured for blocklists.
 
+### Check your allowlists before you trust it
+
+AdGuard Home applies **whitelist filters over blocklists**. An `@@` rule in any allowlist you have
+installed punches through this list regardless of which blocklists are enabled, and disabling a
+blocklist does not disable an allowlist. One concrete measurement: HaGeZi's Allowlist Referral
+(the one that keeps affiliate and referral links redirecting) releases 273 hostnames across 250
+registrable domains from this list — among them `adjust.com`, `appsflyer.com`, `a9.com`,
+`ad.doubleclick.net`, `adform.net` and `amazon-adsystem.com`.
+
+Two tools make that visible instead of invisible:
+
+```bash
+node tools/whitelist-impact.js <allowlist-file>   # how many holes does this allowlist open?
+node tools/referral-gaps.js                       # writes REFERRAL-GAPS.md, annotated
+```
+
+`REFERRAL-GAPS.md` lists every released hostname grouped by registrable domain, with a note on the
+ones that are advertising or attribution infrastructure, plus the wildcard rules that cover blocked
+names. If you want a referral host reachable, prefer adding that one host to your resolver's own
+user rules over installing an allowlist that releases hundreds of trackers:
+
+```yaml
+user_rules:
+  - '@@||adjust.com^'   # only if you really need the Adjust SDK to resolve
+```
+
 ### AdGuard DNS and the AdGuard apps
 
 Add the URL as a custom filter list wherever the product accepts a filter subscription by URL:
@@ -174,9 +200,9 @@ deleting a line from the protection set.
 
 ## Repository layout
 
-- `package.json` — npm scripts (`fetch`, `build`, `audit`, `gap`, `benchmark`, `pipeline`, `verify`,
-  plus `live` / `clean:live` for the live resolver check) and the `@adguard/hostlist-compiler`
-  devDependency; requires Node.js `>= 20`.
+- `package.json` — npm scripts (`fetch`, `build`, `audit`, `gap`, `benchmark`, `stats`, `sources`,
+  `pipeline`, `verify`, `referral-gaps`, `whitelist-impact`, plus `live` / `clean:live` for the live
+  resolver check) and the `@adguard/hostlist-compiler` devDependency; requires Node.js `>= 20`.
 - `tools/sources.js` — the source catalogue: 26 entries, being 24 blocking feeds plus the two
   AdGuard policy feeds, each with its URL order, refresh cadence and risk note.
 - `tools/fetch.js` — downloads the catalogue with per-source retries and mirrors, and normalises
@@ -199,6 +225,11 @@ deleting a line from the protection set.
 - `tools/agh-live-check.js`, `tools/agh-toggle.js`, `tools/dns-probe.js`, `tools/serve-dist.js`,
   `tools/cleanup-live-check.js` — the live-verification kit: serve `dist/` over HTTP, drive an
   AdGuard Home over its API, query it for real, then clean up. Not part of a normal build.
+- `tools/whitelist-impact.js` — given an allowlist file, reports how many blocked hostnames it
+  releases and which registrable domains lose their protection. Takes any whitelist-shaped file and
+  any list, so it works against a foreign allowlist before you install it.
+- `tools/referral-gaps.js` — writes `REFERRAL-GAPS.md`, the annotated version of the same question
+  for HaGeZi's Allowlist Referral specifically; `--check` verifies the document is current.
 - `data/whitelist.txt` — the private whitelist, 69 exact and 286 whole-tree entries in the
   reference build.
 - `data/never-whitelist.txt` — the protection set, 93 domains that no whitelist may release.
@@ -208,6 +239,7 @@ deleting a line from the protection set.
   `invalid`, `onion` and the reverse-DNS zones) applied before the whitelist stage.
 - `data/extra-block.txt` — the curated patch file, 3 rules.
 - `dist/dns-shield.txt` — the published product: 517,007 block rules, 19 exception rules, 11.21 MiB.
+- `REFERRAL-GAPS.md` — generated: what an allowlist filter would release from the published file.
 - `dist/build.log`, `dist/audit.log`, `dist/benchmark.txt`, `dist/stats.json` — logs and summary
   from the reference build.
 - `dist/.compiled.raw` — the compiler's intermediate output, reused by `--no-compile`.
@@ -227,13 +259,20 @@ node tools/audit.js          # must end with "failures 0"
 node tools/coverage-gap.js   # must reconcile the derived set against the published file
 node tools/benchmark.js      # refreshes dist/benchmark.txt; needs network access to the peers
 node tools/write-stats.js    # refreshes dist/stats.json from the list that was just built
+node tools/referral-gaps.js  # refreshes REFERRAL-GAPS.md; --check verifies instead of writing
 ```
 
-`npm run pipeline` runs fetch, build, audit, coverage-gap, benchmark, the source documentation and
-stats in sequence. `tools/fetch.js` only understands `--force` — its default behaviour is already to
+`npm run pipeline` runs fetch, build, audit, coverage-gap, benchmark, the source documentation,
+stats and the referral report in sequence. `tools/fetch.js` only understands `--force` — its default
+behaviour is already to
 reuse any cached feed body larger than 20 bytes, so there is no `--missing` to pass.
 `node tools/build.js --no-compile` reuses `dist/.compiled.raw`; `node tools/build.js --out <path>`
 writes the list somewhere else.
+
+The published file is byte-reproducible. Its `! Last modified:` line is not a wall clock: the build
+stamps it with the last commit's timestamp, so two builds of the same commit produce identical
+bytes and `dist/stats.json`'s `sha256` means something. Set `SOURCE_DATE_EPOCH` to override it with
+any fixed instant, the way reproducible-build tooling expects.
 
 The cold/warm difference is entirely in the fetch stage. A cached build never touches the network:
 `tools/build.js` points `hostlist-compiler` at the cached files, so one flaky feed degrades to
@@ -278,6 +317,27 @@ dnsmasq deployment is part of the verification. What is verified for those platf
 syntax — the audit proves every rule is `||domain^` or `@@||domain^`, with no literal-IP rules, no
 wildcards, no modifiers and pure ASCII, which is what makes the hosts conversion in the quick start
 a mechanical step rather than a bet.
+
+### What a real deployment taught us
+
+The list was then put into service as the only enabled blocklist on that machine, with the five
+previous blocklists disabled. The same 25 hostnames were probed again against the live resolver, and
+one behaved differently from the isolated test: `app.adjust.com` resolved instead of being blocked.
+AdGuard Home's `check_host` gave the reason in one line —
+
+```
+reason=NotFilteredWhiteList   rule=@@||app.adjust.com^
+```
+
+— naming an exception that is **not in the published file** (`grep -F '@@||app.adjust.com^'` finds
+nothing there; the build log shows the opposite, `refused 12 upstream exception(s) covered by the
+never-whitelist`). The rule came from an installed **whitelist filter**, HaGeZi's Allowlist Referral,
+which keeps affiliate and referral links redirecting. That filter is a separate switch: disabling
+every blocklist does not disable it, and it releases 273 hostnames from this list.
+
+With it off, the probe is 22 of 25 filtered, and the three that resolve are intended. The lesson is
+worth more than the fix: on a resolver, *the blocklist is not the whole story* — audit your
+allowlists with `tools/whitelist-impact.js` before you conclude the list is not working.
 
 ## Licence
 

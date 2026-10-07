@@ -109,6 +109,19 @@ const LAYERS = [
         zhNote: '这一层不是独立发布的单主题 feed，而是四个团队各自维护的聚合清单：他们跟踪的地区性、'
             + '厂商专属来源，本项目并不监控。把它们收进来是明确决定，"来源政策"一节说明了原因和代价。',
     },
+    {
+        id: 'reference',
+        kind: 'reference',
+        en: 'Reference only — fetched for a report, never compiled in',
+        zh: '仅供参照 —— 抓取是为了生成报告，绝不参与编译',
+        enNote: 'An ALLOWLIST other people install. AdGuard Home applies allowlist filters over '
+            + 'blocklists, so installing it releases hundreds of our blocked hostnames no matter '
+            + 'which blocklists are enabled. It is fetched so REFERRAL-GAPS.md can be regenerated '
+            + 'anywhere, and is excluded from every count and from the published list.',
+        zhNote: '这是别人会去安装的白名单。AdGuard Home 是用白名单覆盖黑名单的，所以一旦装上它，'
+            + '不管启用哪几条黑名单，都会有几百条本列表拦截的域名被放行。抓取它只为了让 '
+            + 'REFERRAL-GAPS.md 能在任何机器上重新生成；它不参与任何计数，也不会进入发布产物。',
+    },
 ];
 
 const LAYER_EN = {};
@@ -277,11 +290,20 @@ const EDITORIAL = {
         enPurpose: 'Confirmed false positives, published upstream with the bug report behind each one.',
         zhFormat: '@@||domain^ 放行规则（原样保留）',
         zhPurpose: '上游确认的误杀域名，每条规则都能追溯到对应的 bug 报告。',
-    },    'adguard-exclusions': {
+    },
+    'adguard-exclusions': {
         enFormat: 'bare domains, one per line',
         enPurpose: 'Domains upstream withdrew from blocking; subtracted from the compiled set.',
         zhFormat: '纯域名，每行一条',
         zhPurpose: '上游主动解除拦截的域名；构建时从编译结果里减掉。',
+    },
+    'allowlist-referral': {
+        enFormat: '@@||domain^ allow rules, wildcards included',
+        enPurpose: 'NOT a feed for this project. It is the allowlist other people install, fetched '
+            + 'only so REFERRAL-GAPS.md can be regenerated on any machine. It is never compiled in.',
+        zhFormat: '@@||domain^ 放行规则，含通配符',
+        zhPurpose: '不是本项目的 feed。这是别人会安装的白名单，抓取它只为了让 REFERRAL-GAPS.md '
+            + '能在任何机器上重新生成，绝不参与编译。',
     },
 };
 
@@ -354,7 +376,9 @@ function peerCounts() {
 
 // ─────────────────────────────────────────────────────────────────── document builder
 
-const counters = { blocking: 0, coverage: 0, total: 0, unknownIds: [], uncached: [] };
+const counters = {
+    blocking: 0, coverage: 0, reference: 0, required: 0, total: 0, unknownIds: [], uncached: [],
+};
 
 function collect() {
     CATALOGUE.forEach((s) => {
@@ -362,8 +386,13 @@ function collect() {
         if (cachedCount(s.id) == null) counters.uncached.push(s.id);
     });
     counters.total = CATALOGUE.length;
+    // `required === false` entries are fetched for a report rather than for the product, so they
+    // are excluded from every count a reader would use to judge what the list is made of.
+    counters.required = CATALOGUE.filter((s) => s.required !== false).length;
+    counters.reference = counters.total - counters.required;
     counters.coverage = feedsOfLayer('coverage').length;
-    counters.blocking = counters.total - feedsOfLayer('exclusions').length - feedsOfLayer('exceptions').length;
+    counters.blocking = counters.required
+        - feedsOfLayer('exclusions').length - feedsOfLayer('exceptions').length;
 }
 
 /** One markdown table per layer. `lang` is 'en' or 'zh'. */
@@ -505,9 +534,11 @@ function policySection(lang) {
 function buildEn() {
     const L = [];
     const total = counters.total;
+    const required = counters.required;
     const blocking = counters.blocking;
     const coverage = counters.coverage;
-    const policy = total - blocking;
+    const reference = counters.reference;
+    const policy = required - blocking;
 
     L.push('# Sources');
     L.push('');
@@ -517,12 +548,18 @@ function buildEn() {
         + 'The Chinese');
     L.push('edition is [`SOURCES.zh-CN.md`](SOURCES.zh-CN.md).');
     L.push('');
-    L.push(`Layers in the catalogue: **${LAYERS.length}**. Catalogue entries: **${total}** - `
+    L.push(`Layers in the catalogue: **${LAYERS.length}**. Catalogue entries: **${required}** - `
         + `**${blocking} blocking feed entries**`);
     L.push(`(security, ads and trackers, China telemetry, and the four compiled coverage lists), plus `
         + `**${policy} policy entries**`);
     L.push('(upstream exclusions and upstream exceptions). The policy entries are not blocking feeds; they are');
     L.push('applied as set arithmetic after the blocking layers are compiled.');
+    L.push('');
+    L.push(`Catalogue entries above are the ${required} that feed the build. One further entry is fetched but `
+        + `not compiled in`);
+    L.push(`(\`allowlist-referral\`, ${reference} entry): it exists only so the referral report can be rebuilt. `
+        + 'It is counted');
+    L.push('nowhere else and never reaches the published list.');
     L.push('');
     L.push('| Layer | Entries | Role |');
     L.push('| --- | --- | --- |');
@@ -532,6 +569,7 @@ function buildEn() {
     L.push(`| \`exclusions\` | ${feedsOfLayer('exclusions').length} | policy - removes block rules |`);
     L.push(`| \`exceptions\` | ${feedsOfLayer('exceptions').length} | policy - adds allow rules |`);
     L.push(`| \`coverage\` | ${coverage} | blocking, but compiled aggregates |`);
+    L.push(`| \`reference\` | ${reference} | fetched for a report only - never compiled in |`);
     L.push('');
     L.push('## Source policy');
     L.push('');
@@ -642,9 +680,11 @@ function buildEn() {
 function buildZh() {
     const L = [];
     const total = counters.total;
+    const required = counters.required;
     const blocking = counters.blocking;
     const coverage = counters.coverage;
-    const policy = total - blocking;
+    const reference = counters.reference;
+    const policy = required - blocking;
 
     L.push('# 来源清单');
     L.push('');
@@ -653,10 +693,13 @@ function buildZh() {
     L.push('要增删或修改某个 feed，改目录文件即可，目录是唯一的权威清单。英文版见 '
         + '[`SOURCES.md`](SOURCES.md)。');
     L.push('');
-    L.push(`目录中的层数：**${LAYERS.length}**。目录条目总数：**${total}**，其中 **${blocking} 条为拦截 feed 条目**`);
+    L.push(`目录中的层数：**${LAYERS.length}**。参与构建的目录条目总数：**${required}**，其中 **${blocking} 条为拦截 feed 条目**`);
     L.push(`（安全、广告与追踪器、中国区遥测，以及四份已编译的聚合覆盖清单），另有 **${policy} 条策略条目**`);
     L.push('（上游排除清单与上游例外清单）。策略条目不参与拦截，它们是在拦截层编译完成之后，');
     L.push('以集合运算的方式施加的。');
+    L.push('');
+    L.push(`另有一条（\`allowlist-referral\`，共 ${reference} 条）会被抓取但不参与编译：它存在的唯一目的是`);
+    L.push('让返利报告能在任何机器上重新生成。它不计入任何其他地方，也永远不会进入发布产物。');
     L.push('');
     L.push('| 层 | 条目数 | 作用 |');
     L.push('| --- | --- | --- |');
@@ -666,6 +709,7 @@ function buildZh() {
     L.push(`| \`exclusions\` | ${feedsOfLayer('exclusions').length} | 策略，删除拦截规则 |`);
     L.push(`| \`exceptions\` | ${feedsOfLayer('exceptions').length} | 策略，新增放行规则 |`);
     L.push(`| \`coverage\` | ${coverage} | 拦截，但属于上游已编译的聚合清单 |`);
+    L.push(`| \`reference\` | ${reference} | 仅供参照，抓取用来出报告，绝不参与编译 |`);
     L.push('');
     L.push('## 来源政策');
     L.push('');
@@ -753,7 +797,9 @@ function main() {
     console.log(`layers              ${LAYERS.length} (${LAYERS.map((l) => l.id).join(', ')})`);
     console.log(`blocking feeds      ${counters.blocking}`);
     console.log(`coverage lists      ${counters.coverage}`);
-    console.log(`policy feeds        ${counters.total - counters.blocking}`);
+    console.log(`policy feeds        ${counters.required - counters.blocking}`);
+    console.log(`reference only      ${counters.reference} (fetched for a report, never compiled in)`);
+    console.log(`compiled entries    ${counters.required}`);
     console.log(`cached sources      ${counters.total - counters.uncached.length}/${counters.total}`);
     if (counters.uncached.length) {
         console.log('not fetched yet (Entries column left out; run tools/fetch.js):');

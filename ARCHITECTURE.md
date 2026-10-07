@@ -194,6 +194,31 @@ matters because those are the rules the whitelist layer is most likely to regres
 `set_url` payload. The local v0.107.79 does not, which is exactly why the isolated instance exists
 rather than a flag flip on the live service.
 
+### Allowlist filters beat blocklists
+
+The isolated-instance run was clean: every one of the 25 probes behaved as designed. Putting the same
+list into service on the real resolver produced one deviation - `app.adjust.com` resolved instead of
+being blocked - and the cause was not in this repository at all.
+
+AdGuard Home resolves a query against blocklists and allowlists, and an allowlist match wins. The
+rule that fired was `@@||app.adjust.com^`, and `grep -F` finds no such line in `dist/dns-shield.txt`;
+the build log says the opposite, `refused 12 upstream exception(s) covered by the never-whitelist`,
+with `app.adjust.com` named among them. The rule came from the installed allowlist filter HaGeZi's
+Allowlist Referral, whose stated purpose is keeping affiliate and referral links redirecting.
+
+The architectural consequence is the part worth keeping: **allowlist filters are a separate switch
+from blocklists.** Disabling every blocklist does not disable an allowlist, so a list can be
+perfectly correct and still be silently overridden by an allowlist the operator forgot about. On the
+recorded instance that filter released 273 hostnames across 250 registrable domains, including
+`adjust.com`, `appsflyer.com`, `a9.com`, `ad.doubleclick.net`, `adform.net` and
+`amazon-adsystem.com`.
+
+That is why the repository now ships `tools/whitelist-impact.js` (generic: any allowlist file, any
+list) and `tools/referral-gaps.js` (specific: writes the annotated `REFERRAL-GAPS.md`, with `--check`
+in `npm run verify`). Either one answers "what does this allowlist cost me?" before the cost is
+discovered as a support question. After the filter was disabled the probe was 22 of 25 filtered,
+with the three remaining resolutions all intended.
+
 ## Known limitations
 
 - **Size.** 11.21 MiB and 517,007 rules is roughly twice OISD Big. It suits a home DNS resolver and

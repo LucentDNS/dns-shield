@@ -21,8 +21,10 @@
     "agh": "node tools/agh-toggle.js",
     "live": "node tools/agh-live-check.js",
     "clean:live": "node tools/cleanup-live-check.js",
-    "pipeline": "node tools/fetch.js && node tools/build.js && node tools/audit.js && node tools/coverage-gap.js && node tools/benchmark.js && node tools/gen-sources-doc.js && node tools/write-stats.js",
-    "verify": "node tools/audit.js && node tools/coverage-gap.js && node tools/benchmark.js"
+    "referral-gaps": "node tools/referral-gaps.js",
+    "whitelist-impact": "node tools/whitelist-impact.js",
+    "pipeline": "node tools/fetch.js && node tools/build.js && node tools/audit.js && node tools/coverage-gap.js && node tools/benchmark.js && node tools/gen-sources-doc.js && node tools/write-stats.js && node tools/referral-gaps.js",
+    "verify": "node tools/audit.js && node tools/coverage-gap.js && node tools/benchmark.js && node tools/referral-gaps.js --check"
   },
   "devDependencies": {
     "@adguard/hostlist-compiler": "^2.1.1"

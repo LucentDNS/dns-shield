@@ -145,7 +145,13 @@ function normalise(text) {
     return out;
 }
 
-/** Save allow rules verbatim - they are `@@||domain^` and must not be hostname-normalised. */
+/**
+ * Save allow rules verbatim - they are `@@||domain^` and must not be hostname-normalised.
+ *
+ * Used for the feeds that get compiled into the exclusion layer: AdGuard's hand-written exception
+ * list is deliberately domain-shaped, so a wildcard rule there is an upstream oddity worth dropping
+ * rather than carrying into the pipeline.
+ */
 function extractAllowRules(text) {
     const seen = new Set();
     const out = [];
@@ -153,6 +159,26 @@ function extractAllowRules(text) {
         const line = raw.trim();
         if (!line.startsWith('@@')) return;
         if (!/^@@\|\|[a-z0-9][a-z0-9.-]*\^\|?$/i.test(line)) return;
+        const norm = line.replace(/\|$/, '');
+        if (!seen.has(norm)) { seen.add(norm); out.push(norm); }
+    });
+    return out;
+}
+
+/**
+ * Same, but wildcards survive.
+ *
+ * Allowlist feeds are full of `@@||app.*.adjust.com^` and `@@||adservice.google.*^`. For a report
+ * that measures what installing such a list would release, dropping the wildcards would understate
+ * the damage - and 69 of the 936 rules in the recorded feed are wildcards.
+ */
+function extractAllowRulesWithWildcards(text) {
+    const seen = new Set();
+    const out = [];
+    text.split('\n').forEach((raw) => {
+        const line = raw.trim();
+        if (!line.startsWith('@@')) return;
+        if (!/^@@\|\|[a-z0-9*][a-z0-9.*-]*\^\|?$/i.test(line)) return;
         const norm = line.replace(/\|$/, '');
         if (!seen.has(norm)) { seen.add(norm); out.push(norm); }
     });
@@ -167,7 +193,11 @@ async function fetchOne(source) {
         if (typeof body !== 'string') { errors.push(`${url}: ${body.error}`); continue; }
 
         const isAllowList = source.mode === 'allow';
-        const lines = isAllowList ? extractAllowRules(body) : normalise(body);
+        const lines = isAllowList
+            ? (source.required === false
+                ? extractAllowRulesWithWildcards(body)
+                : extractAllowRules(body))
+            : normalise(body);
         if (lines.length === 0) { errors.push(`${url}: produced no usable lines`); continue; }
 
         const dest = path.join(CACHE, `${source.id}.txt`);

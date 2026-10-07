@@ -4,10 +4,14 @@ This file is generated from [`tools/sources.js`](tools/sources.js) by [`tools/ge
 added or changed in the catalogue, and the catalogue is the only authoritative list. The Chinese
 edition is [`SOURCES.zh-CN.md`](SOURCES.zh-CN.md).
 
-Layers in the catalogue: **6**. Catalogue entries: **26** - **24 blocking feed entries**
+Layers in the catalogue: **7**. Catalogue entries: **26** - **24 blocking feed entries**
 (security, ads and trackers, China telemetry, and the four compiled coverage lists), plus **2 policy entries**
 (upstream exclusions and upstream exceptions). The policy entries are not blocking feeds; they are
 applied as set arithmetic after the blocking layers are compiled.
+
+Catalogue entries above are the 26 that feed the build. One further entry is fetched but not compiled in
+(`allowlist-referral`, 1 entry): it exists only so the referral report can be rebuilt. It is counted
+nowhere else and never reaches the published list.
 
 | Layer | Entries | Role |
 | --- | --- | --- |
@@ -17,6 +21,7 @@ applied as set arithmetic after the blocking layers are compiled.
 | `exclusions` | 1 | policy - removes block rules |
 | `exceptions` | 1 | policy - adds allow rules |
 | `coverage` | 4 | blocking, but compiled aggregates |
+| `reference` | 1 | fetched for a report only - never compiled in |
 
 ## Source policy
 
@@ -165,6 +170,20 @@ Feeds in this layer: 4
 | `adguard-dns-filter` | AdGuard DNS filter (178,197 entries) | adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt | adblock, compiled | daily | Conservative aggregate; AdGuard leaves many ad hosts to its browser extension. | Aggregated compilation maintained by AdGuard. Deliberately conservative - it leaves many ad hosts to its browser extension - so it is the narrowest of the four by design. |
 
 Cached: 4/4. Entry counts are line counts of the last fetched copy in .cache/sources/ and change between runs.
+
+Fetched directly: adguardteam.github.io is a reliable CDN, so no mirror is used.
+
+### Reference only — fetched for a report, never compiled in
+
+An ALLOWLIST other people install. AdGuard Home applies allowlist filters over blocklists, so installing it releases hundreds of our blocked hostnames no matter which blocklists are enabled. It is fetched so REFERRAL-GAPS.md can be regenerated anywhere, and is excluded from every count and from the published list.
+
+Feeds in this layer: 1
+
+| id | Feed name | Upstream URL(s) | Format | Refresh | Purpose | Risk note |
+| --- | --- | --- | --- | --- | --- | --- |
+| `allowlist-referral` | HaGeZi's Allowlist Referral (reference only) (936 entries) (mode: `allow`) | adguardteam.github.io/HostlistsRegistry/assets/filter_45.txt | ||domain|| allow rules, wildcards included | weekly | NOT a feed for this project. It is the allowlist other people install, fetched only so REFERRAL-GAPS.md can be regenerated on any machine. It is never compiled in. | None to this list - it is never compiled in. It is here because AdGuard Home applies allowlist filters OVER blocklists, so installing it releases 273 of our blocked hostnames (including adjust.com, appsflyer.com and amazon-adsystem.com) no matter which blocklists are enabled. tools/whitelist-impact.js measures it; tools/referral-gaps.js documents it. |
+
+Cached: 1/1. Entry counts are line counts of the last fetched copy in .cache/sources/ and change between runs.
 
 Fetched directly: adguardteam.github.io is a reliable CDN, so no mirror is used.
 

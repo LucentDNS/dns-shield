@@ -46,6 +46,31 @@ const VERSION = process.env.DNS_SHIELD_VERSION || '1.0.0';
 // the repository URL in; a local build falls back to the README's canonical location.
 const HOMEPAGE = process.env.DNS_SHIELD_HOMEPAGE || 'https://github.com/LucentDNS/dns-shield';
 
+/**
+ * The `! Last modified:` stamp, resolved the way reproducible-build tooling expects.
+ *
+ * A wall-clock stamp inside the published file means two builds of the same inputs produce
+ * different bytes, so dist/stats.json's sha256 can never be predicted or compared. Honouring
+ * SOURCE_DATE_EPOCH (https://reproducible-builds.org/specs/source-date-epoch/) keeps the list
+ * byte-reproducible; with no override we fall back to the last commit's timestamp, which
+ * changes only when the repository itself does.
+ */
+function lastModified() {
+    const epoch = Number(process.env.SOURCE_DATE_EPOCH);
+    if (Number.isFinite(epoch) && epoch > 0) return new Date(epoch * 1000).toISOString();
+    try {
+        const { execFileSync } = require('child_process');
+        const out = execFileSync('git', ['log', '-1', '--format=%cI'], {
+            cwd: ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'],
+        }).trim();
+        if (out) return new Date(out).toISOString();
+    } catch {
+        // No git, or no commit yet: a wall clock is the only thing left to use.
+    }
+    return new Date().toISOString();
+}
+const TIMESTAMP = lastModified();
+
 const RE_LABEL = /^(?=.{1,253}$)([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/;
 const RE_BLOCK = /^\|\|([a-z0-9][a-z0-9.-]*)\^$/;
 const RE_ALLOW = /^@@\|\|([a-z0-9][a-z0-9.-]*)\^\|?$/;
@@ -159,21 +184,26 @@ function main() {
 
     banner(`${NAME} ${VERSION} - build`);
     log(`time      ${new Date().toISOString()}`);
+    log(`stamp     ${TIMESTAMP}${process.env.SOURCE_DATE_EPOCH ? ' (SOURCE_DATE_EPOCH)' : ' (last commit)'}`);
     log(`node      ${process.version}`);
     log(`compiler  ${COMPILER_ENTRY}`);
     log(`output    ${OUT}`);
 
     // ---- availability
     const available = new Map();
-    SOURCES.forEach((s) => {
+    // `required === false` marks a source that is fetched for a report rather than for compilation
+    // (currently the referral allowlist that REFERRAL-GAPS.md documents). It is deliberately absent
+    // from every count below, so it can never change what gets published.
+    const required = SOURCES.filter((s) => s.required !== false);
+    required.forEach((s) => {
         const p = path.join(CACHE, `${s.id}.txt`);
         if (fs.existsSync(p) && fs.statSync(p).size > 20) {
             available.set(s.id, fs.readFileSync(p, 'utf8').split('\n').filter(Boolean).length);
         }
     });
-    const missing = SOURCES.filter((s) => !available.has(s.id));
+    const missing = required.filter((s) => !available.has(s.id));
 
-    const blocking = SOURCES.filter((s) => s.layer !== 'exceptions' && s.layer !== 'exclusions');
+    const blocking = required.filter((s) => s.layer !== 'exceptions' && s.layer !== 'exclusions');
     const blockingIds = new Set(blocking.map((s) => s.id));
     const exclusionsId = 'adguard-exclusions';
     // Counted for the published header only. Three distinct things ship in this file and the header
@@ -182,10 +212,10 @@ function main() {
     // nothing and only remove mistakes.
     const singleTopicCount = blocking.filter((s) => s.layer !== 'coverage').length;
     const coverageCount = blocking.filter((s) => s.layer === 'coverage').length;
-    const policyCount = SOURCES.length - blocking.length;
+    const policyCount = required.length - blocking.length;
 
     banner('stage 1  sources');
-    log(`${available.size}/${SOURCES.length} sources present in cache`);
+    log(`${available.size}/${required.length} sources present in cache`);
     blocking.forEach((s) => {
         if (!blockingIds.has(s.id)) return;
         const n = available.get(s.id);
@@ -406,7 +436,7 @@ function main() {
         `! Homepage: ${HOMEPAGE}`,
         `! License: GPL-3.0`,
         `! Version: ${VERSION}`,
-        `! Last modified: ${new Date().toISOString()}`,
+        `! Last modified: ${TIMESTAMP}`,
         `!`,
         `! Built from ${singleTopicCount} single-topic upstream feeds, ${coverageCount} compiled`,
         `! coverage lists and ${policyCount} policy lists. The policy lists block nothing: they only`,

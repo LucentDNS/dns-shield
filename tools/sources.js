@@ -262,4 +262,19 @@ module.exports = [
         refresh: 'per issue',
         risk: 'Domains AdGuard un-blocked after real breakage reports (banking, retail, consent platforms). Applied as exclusions so our blocking layers cannot re-introduce them.',
     },
+
+    // ───────────────────────────────────────────── Reference only (never compiled)
+    {
+        id: 'allowlist-referral',
+        name: "HaGeZi's Allowlist Referral (reference only)",
+        urls: ['https://adguardteam.github.io/HostlistsRegistry/assets/filter_45.txt'],
+        layer: 'reference',
+        mode: 'allow',
+        // Fetched so that REFERRAL-GAPS.md can be regenerated on any machine, but deliberately not
+        // compiled: this is an ALLOWLIST that other people install, and the report exists to show
+        // what installing it would cost. Counting it as a feed would misdescribe the product.
+        required: false,
+        refresh: 'weekly',
+        risk: 'None to this list - it is never compiled in. It is here because AdGuard Home applies allowlist filters OVER blocklists, so installing it releases 273 of our blocked hostnames (including adjust.com, appsflyer.com and amazon-adsystem.com) no matter which blocklists are enabled. tools/whitelist-impact.js measures it; tools/referral-gaps.js documents it.',
+    },
 ];
