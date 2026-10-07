@@ -270,9 +270,9 @@ reuse any cached feed body larger than 20 bytes, so there is no `--missing` to p
 writes the list somewhere else.
 
 The published file is byte-reproducible. Its `! Last modified:` line is not a wall clock: the build
-stamps it with the last commit's timestamp, so two builds of the same commit produce identical
-bytes and `dist/stats.json`'s `sha256` means something. Set `SOURCE_DATE_EPOCH` to override it with
-any fixed instant, the way reproducible-build tooling expects.
+stamps it with the newest modification time among the cached feeds, so two builds of the same feeds
+produce identical bytes and `dist/stats.json`'s `sha256` means something. Set `SOURCE_DATE_EPOCH`, or
+pass `node tools/build.js --stamp <iso|epoch>`, to pin it to a fixed instant instead.
 
 The cold/warm difference is entirely in the fetch stage. A cached build never touches the network:
 `tools/build.js` points `hostlist-compiler` at the cached files, so one flaky feed degrades to

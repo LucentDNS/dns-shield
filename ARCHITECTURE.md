@@ -225,15 +225,25 @@ A published list is a file people subscribe to, so its bytes are treated as an a
 prose. `! Last modified:` used to be `new Date().toISOString()`, which made two builds of identical
 inputs differ and left the `sha256` in `dist/stats.json` uncomparable with anything.
 
-`tools/build.js` now resolves that stamp once, in `lastModified()`: `SOURCE_DATE_EPOCH` when the
-environment sets it, otherwise the timestamp of the last commit. Two builds of one commit therefore
-produce identical bytes, and a rebuild that changes nothing changes nothing. The value is logged on
-the `stamp` line, and `!` comments carry no rules, so switching stamps never touches the rule set
-(517,007 block / 19 allow) or the byte count.
+`tools/build.js` now derives that stamp from the inputs it was built from: the newest modification
+time among the cached feed bodies. That is the one value the line is actually describing, and it
+gives the property that matters - re-running the build against an unchanged cache produces identical
+bytes, while fetching fresher feeds moves the stamp forward exactly when the data behind it moved.
+The value is logged on the `stamp` line. `SOURCE_DATE_EPOCH`, or `--stamp <iso|epoch>`, pins it when
+a caller needs a fixed value.
 
-One consequence worth stating: in CI the stamp is one commit behind, because a commit cannot know
-its own timestamp. The alternative - stamping the wall clock - buys a fresher date at the cost of
-never being able to verify that a downloaded file is the file the build produced.
+Two rejected alternatives are worth recording, because both look simpler:
+
+- **The wall clock.** Freshest date, but two builds of identical feeds differ, so the `sha256` in
+  `dist/stats.json` can never be checked against a downloaded copy - which is the only thing that
+  hash is for.
+- **The repository's own commit time.** Reproducible, but it can never settle: a commit cannot
+  contain its own timestamp, so every publish would change the stamp and invalidate the hash it just
+  wrote. Deriving the stamp from the feeds breaks that loop, because the feeds do not change when a
+  commit is made.
+
+`!` comments carry no rules, so moving the stamp never touches the rule set (517,007 block / 19
+allow) or the byte count (11,758,563).
 
 ## Known limitations
 

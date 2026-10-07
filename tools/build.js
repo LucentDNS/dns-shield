@@ -47,26 +47,41 @@ const VERSION = process.env.DNS_SHIELD_VERSION || '1.0.0';
 const HOMEPAGE = process.env.DNS_SHIELD_HOMEPAGE || 'https://github.com/LucentDNS/dns-shield';
 
 /**
- * The `! Last modified:` stamp, resolved the way reproducible-build tooling expects.
+ * The `! Last modified:` stamp, derived from the inputs rather than from the clock.
  *
- * A wall-clock stamp inside the published file means two builds of the same inputs produce
- * different bytes, so dist/stats.json's sha256 can never be predicted or compared. Honouring
- * SOURCE_DATE_EPOCH (https://reproducible-builds.org/specs/source-date-epoch/) keeps the list
- * byte-reproducible; with no override we fall back to the last commit's timestamp, which
- * changes only when the repository itself does.
+ * A wall-clock stamp inside the published file means two builds of the same feeds produce different
+ * bytes, so dist/stats.json's sha256 can never be predicted or compared against a downloaded copy.
+ * Stamping the repository's own commit time would fix that but can never settle: a commit cannot
+ * contain its own timestamp, so every publish would invalidate the hash it just wrote.
+ *
+ * So the stamp is the newest modification time among the cached feed bodies - the one thing it is
+ * actually describing. Re-running the build with an unchanged cache reproduces the exact bytes;
+ * fetching fresher feeds moves the stamp forward exactly when the data behind it moved. CI restores
+ * `.cache/sources` with mtimes intact, which is what keeps this stable there too.
+ *
+ * `SOURCE_DATE_EPOCH` (https://reproducible-builds.org/specs/source-date-epoch/) overrides it when
+ * a caller needs to pin the value; `--stamp` does the same from the command line.
  */
 function lastModified() {
-    const epoch = Number(process.env.SOURCE_DATE_EPOCH);
-    if (Number.isFinite(epoch) && epoch > 0) return new Date(epoch * 1000).toISOString();
-    try {
-        const { execFileSync } = require('child_process');
-        const out = execFileSync('git', ['log', '-1', '--format=%cI'], {
-            cwd: ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'],
-        }).trim();
-        if (out) return new Date(out).toISOString();
-    } catch {
-        // No git, or no commit yet: a wall clock is the only thing left to use.
+    const flag = process.argv.indexOf('--stamp');
+    const pinned = flag > -1 ? process.argv[flag + 1] : process.env.SOURCE_DATE_EPOCH;
+    if (pinned) {
+        if (/^\d+$/.test(String(pinned))) return new Date(Number(pinned) * 1000).toISOString();
+        const parsed = new Date(pinned);
+        if (!Number.isNaN(parsed.getTime())) return parsed.toISOString();
+        log(`WARNING  could not read the pinned stamp ${pinned}, falling back to the cache`);
     }
+    let newest = 0;
+    try {
+        for (const entry of fs.readdirSync(CACHE)) {
+            if (entry.startsWith('.')) continue;
+            const mtime = fs.statSync(path.join(CACHE, entry)).mtimeMs;
+            if (mtime > newest) newest = mtime;
+        }
+    } catch {
+        // No cache yet: the caller is about to fail on the missing sources anyway.
+    }
+    if (newest) return new Date(newest).toISOString();
     return new Date().toISOString();
 }
 const TIMESTAMP = lastModified();
@@ -184,7 +199,7 @@ function main() {
 
     banner(`${NAME} ${VERSION} - build`);
     log(`time      ${new Date().toISOString()}`);
-    log(`stamp     ${TIMESTAMP}${process.env.SOURCE_DATE_EPOCH ? ' (SOURCE_DATE_EPOCH)' : ' (last commit)'}`);
+    log(`stamp     ${TIMESTAMP}${process.argv.includes('--stamp') || process.env.SOURCE_DATE_EPOCH ? ' (pinned)' : ' (newest cached feed)'}`);
     log(`node      ${process.version}`);
     log(`compiler  ${COMPILER_ENTRY}`);
     log(`output    ${OUT}`);

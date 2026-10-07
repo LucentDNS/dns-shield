@@ -237,9 +237,9 @@ node tools/referral-gaps.js  # 刷新 REFERRAL-GAPS.md；加 --check 则只校�
 文件，因此并没有 `--missing` 这个参数。`node tools/build.js --no-compile` 复用
 `dist/.compiled.raw`；`node tools/build.js --out <path>` 把列表写到其他位置。
 
-发布文件是字节可复现的。里面的 `! Last modified:` 不是墙上时间：构建时用最后一个提交的时间戳写入，
-所以同一个提交构建两次得到的字节完全相同，`dist/stats.json` 里的 `sha256` 也就有了意义。可以设置
-`SOURCE_DATE_EPOCH` 指定任意固定时刻来覆盖它，这正是可复现构建工具链所期望的做法。
+发布文件是字节可复现的。里面的 `! Last modified:` 不是墙上时间：构建时取所有缓存 feed 中最新的修改
+时间写入，所以用同一批 feed 构建两次得到的字节完全相同，`dist/stats.json` 里的 `sha256` 也就有了意义。
+需要固定值时，可以设置 `SOURCE_DATE_EPOCH`，或运行 `node tools/build.js --stamp <iso|epoch>`。
 
 冷启动与热构建的差别完全在抓取阶段。命中缓存的构建不访问网络：`tools/build.js` 让
 `hostlist-compiler` 读取缓存文件，因此某个订阅源不稳定只会退化为“报告一个源缺失”，而不会中断整次

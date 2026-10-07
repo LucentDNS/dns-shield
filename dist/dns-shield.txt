@@ -3,7 +3,7 @@
 ! Homepage: https://github.com/LucentDNS/dns-shield
 ! License: GPL-3.0
 ! Version: 1.0.0
-! Last modified: 2026-10-07T07:40:28.000Z
+! Last modified: 2026-10-07T07:17:25.108Z
 !
 ! Built from 20 single-topic upstream feeds, 4 compiled
 ! coverage lists and 2 policy lists. The policy lists block nothing: they only
