@@ -219,6 +219,22 @@ in `npm run verify`). Either one answers "what does this allowlist cost me?" bef
 discovered as a support question. After the filter was disabled the probe was 22 of 25 filtered,
 with the three remaining resolutions all intended.
 
+## Reproducible output
+
+A published list is a file people subscribe to, so its bytes are treated as an artifact rather than
+prose. `! Last modified:` used to be `new Date().toISOString()`, which made two builds of identical
+inputs differ and left the `sha256` in `dist/stats.json` uncomparable with anything.
+
+`tools/build.js` now resolves that stamp once, in `lastModified()`: `SOURCE_DATE_EPOCH` when the
+environment sets it, otherwise the timestamp of the last commit. Two builds of one commit therefore
+produce identical bytes, and a rebuild that changes nothing changes nothing. The value is logged on
+the `stamp` line, and `!` comments carry no rules, so switching stamps never touches the rule set
+(517,007 block / 19 allow) or the byte count.
+
+One consequence worth stating: in CI the stamp is one commit behind, because a commit cannot know
+its own timestamp. The alternative - stamping the wall clock - buys a fresher date at the cost of
+never being able to verify that a downloaded file is the file the build produced.
+
 ## Known limitations
 
 - **Size.** 11.21 MiB and 517,007 rules is roughly twice OISD Big. It suits a home DNS resolver and
