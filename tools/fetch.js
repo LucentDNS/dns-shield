@@ -28,6 +28,17 @@ const TIMEOUT_MS = 120000;
 const CONCURRENCY = 3;
 const RETRY_DELAY_MS = 2500;
 
+// A cache entry is a speed-up, never a policy. Without an age limit the run keeps serving whatever
+// bodies the first run of a cache chain downloaded, so a scheduled build can stay green for days
+// while republishing a list that no longer reflects any upstream. The age is read from `.meta.json`
+// (`fetched`, a value written into the cached file), never from the file mtime: a restored CI cache
+// hands every body a brand-new mtime, which is exactly what makes an mtime-based age worthless.
+//
+// 20 hours: short enough that a daily run always refetches, long enough that a second run on the
+// same day (a retry after a dropped cron, or a push) reuses the first one's bodies instead of
+// hammering the upstreams again.
+const CACHE_MAX_AGE_HOURS = 20;
+
 const DNS_SERVERS = ['127.0.0.1', '192.168.3.1'];
 const RE_HOST = /^(?=.{1,253}$)([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/;
 
@@ -264,9 +275,16 @@ async function main() {
 
     catalog.forEach((s) => {
         const dest = path.join(CACHE, `${s.id}.txt`);
-        if (!force && fs.existsSync(dest) && fs.statSync(dest).size > 20) {
+        const onDisk = fs.existsSync(dest) && fs.statSync(dest).size > 20;
+        const prior = META_ENTRIES[s.id];
+        const fetchedAt = prior && prior.fetched ? Date.parse(prior.fetched) : NaN;
+        // No recorded age counts as no evidence of freshness, so the body is re-fetched. A stale body
+        // is only ever replaced on success - tools/build.js decides availability from the file on
+        // disk, so a feed whose refresh fails keeps serving the body it already had (and the run
+        // reports it missing) instead of silently dropping out of the list.
+        const ageHours = Number.isNaN(fetchedAt) ? Infinity : (Date.now() - fetchedAt) / 3600000;
+        if (!force && onDisk && ageHours < CACHE_MAX_AGE_HOURS) {
             const text = fs.readFileSync(dest, 'utf8');
-            const prior = META_ENTRIES[s.id];
             // Cache written before provenance existed, or by an interrupted run: record the digest
             // of what is sitting on disk so the stamp is still a function of the data. The body is
             // read only, never rewritten, so this costs nothing and cannot churn mtimes.
@@ -281,7 +299,7 @@ async function main() {
         } else queue.push(s);
     });
 
-    console.log(`fetch: ${catalog.length} sources (${catalog.length - queue.length} cached, ${queue.length} to fetch)\n`);
+    console.log(`fetch: ${catalog.length} sources (${catalog.length - queue.length} cached, ${queue.length} to fetch; cache max age ${CACHE_MAX_AGE_HOURS}h)\n`);
     const started = Date.now();
     const ticker = setInterval(() => {
         console.log(`  ... ${catalog.length - queue.length}/${catalog.length}, ${((Date.now() - started) / 60000).toFixed(1)} min`);

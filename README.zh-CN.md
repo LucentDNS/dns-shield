@@ -92,8 +92,15 @@ https://raw.githubusercontent.com/LucentDNS/dns-shield/main/dist/dns-shield.txt
 
 订阅地址永远不变，它背后的文件由 `.github/workflows/build.yml` 重建，**每天 03:17 UTC（北京时间
 11:17）**跑一次。刻意避开整点：GitHub 的定时 runner 在 `:00` 极度拥塞，启动延迟是定时任务被跳过
-最常见的原因。你也可以在 **Actions** 页面手动点 **Run workflow** 触发一次，并可勾选强制重新下载
-全部源。
+最常见的原因。另外还有 **05:43 UTC 的第二次尝试**，因为 GitHub 的调度器是尽力而为的，负载高时确实
+会丢任务；它不是第二次构建——源缓存的有效期是 20 小时，所以这次重试会复用第一次拿到的源文件，重建
+出完全相同的字节，什么都不发布。你也可以在 **Actions** 页面手动点 **Run workflow** 触发一次，并可
+勾选强制重新下载全部源。
+
+新鲜度由代码保证，不交给缓存碰运气：`tools/fetch.js` 会把**超过 20 小时**的缓存源重新下载，判断依据
+是记录在源文件旁边的抓取时间，而不是文件 mtime（CI 恢复缓存后每个文件的 mtime 都会变成"刚刚"）。因此
+每天那次运行一定会去上游取当前副本，而同一天的第二次运行仍然很便宜。某个源刷新失败时，它会继续使用
+磁盘上已有的那份，而不是从列表里消失。
 
 如果一次运行发现内容没有变化，它什么都不发布：最后一步会比较重建结果，只有真的不同才提交。另外
 两点在你依赖它时很重要：
@@ -315,9 +322,9 @@ node tools/referral-gaps.js  # 刷新 REFERRAL-GAPS.md；加 --check 则只校�
 ```
 
 `npm run pipeline` 会依次执行 fetch、build、audit、coverage-gap、benchmark、订阅源文档生成、统计
-和返利漏洞报告。`tools/fetch.js` 只认 `--force`：它的默认行为本来就是复用任何大于 20 字节的缓存
-文件，因此并没有 `--missing` 这个参数。`node tools/build.js --no-compile` 复用
-`dist/.compiled.raw`；`node tools/build.js --out <path>` 把列表写到其他位置。
+和返利漏洞报告。`tools/fetch.js` 只认 `--force`：默认情况下，只要源文件旁边记录的抓取时间**不到 20
+小时**就复用缓存，否则重新下载，因此并没有 `--missing` 这个参数。`node tools/build.js --no-compile`
+复用 `dist/.compiled.raw`；`node tools/build.js --out <path>` 把列表写到其他位置。
 
 发布文件是字节可复现的，而且头部两行让这件事可以被验证，而不只是一句声明。`! List revision:`
 是对构建所消费的每一份 feed 正文求出的摘要——两台机器拿着同一批 feed 就会算出同一个 revision，

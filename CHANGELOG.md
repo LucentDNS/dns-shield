@@ -17,6 +17,20 @@ See `ARCHITECTURE.md` ("Reproducible output") for how both values are derived.
 
 ## Unreleased
 
+- **Cached feed bodies expire, so the daily run cannot serve stale data.** `tools/fetch.js` used to
+  reuse any cached body larger than 20 bytes, with no upper bound on its age. Because CI restores
+  `.cache/sources` from the previous run every day, a scheduled build could keep rebuilding the same
+  frozen feed set indefinitely and still exit green — and nothing would catch it, since every gate
+  compares the product against the very feeds it was built from. A body is now re-downloaded when the
+  fetch time recorded beside it in `.meta.json` is more than **20 hours** old. The age is deliberately
+  not taken from the file mtime: `actions/cache@v4` hands every restored file a fresh mtime, so an
+  mtime-based age would call a week-old body new. The effect is measurable in the run history — a warm
+  fetch step takes 0-1s and a cold one 640s, and a cold one is now guaranteed once a day. A failed
+  refresh keeps the body already on disk, so a flaky upstream still cannot shrink the list.
+- **A second scheduled attempt covers a dropped cron.** GitHub's scheduler is best-effort and drops
+  runs under load, which would leave subscribers two days behind. The workflow now also fires at
+  `43 5 * * *`; the 20-hour cache window makes that retry reuse the 03:17 bodies, rebuild
+  byte-identical output and publish nothing unless the first attempt never happened.
 - **Cross-feed compression no longer eats rules.** `hostlist-compiler`'s `Compress` drops a rule
   when any ancestor is present, which is correct within one feed and destructive across feeds: the
   bare `cloudfront.net` in `easyprivacy-thirdparty` was deleting ~1,900 `*.cloudfront.net`

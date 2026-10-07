@@ -66,6 +66,21 @@ reports feed availability runs *after* Publish, so a missing feed never keeps th
 and only a `MISSING SOURCES:` line - which cannot happen, because the build already refused - fails
 the run. An optional feed that is down produces an `::notice::`, not an error.
 
+**Feed freshness.** A cache entry is a speed-up, never a policy, so `tools/fetch.js` treats a body
+whose recorded fetch time is more than **20 hours** old as absent and downloads it again. The age
+comes from `.meta.json` (`fetched`), not from the file's mtime, for the same reason the build stamp
+ignores mtimes: `actions/cache@v4` hands every restored body a fresh mtime, so an mtime-based age
+would report a week-old body as new. Two properties fall out of the 20-hour window. The daily run
+always refetches, so a green scheduled build cannot quietly republish stale data - the failure mode
+that would otherwise be invisible, because every gate compares the product against the feeds it was
+built from, and a frozen cache keeps those consistent with each other. And a second run on the same
+day reuses the first one's bodies, which is what makes the workflow's retry cron cheap instead of a
+second full download.
+
+A stale body is only ever replaced on success. `tools/build.js` decides availability from the file on
+disk, so a feed whose refresh fails keeps serving the body it already had and is reported as missing,
+rather than disappearing from the list and shrinking it.
+
 ### Attribution (a gate, not a stage)
 
 Every feed in the catalogue is also a third party's work with its own licence, and the published file

@@ -109,8 +109,17 @@ https://raw.githubusercontent.com/LucentDNS/dns-shield/main/dist/dns-shield.txt
 The subscription URL never changes. The file behind it is rebuilt by the workflow in
 `.github/workflows/build.yml`, which runs **daily at 03:17 UTC** (11:17 Beijing time) — deliberately
 off the hour, because GitHub's scheduled runners are congested at `:00` and a delayed start is the
-most common reason a scheduled job is skipped. You can also start a run by hand from the **Actions**
-tab (Run workflow), optionally forcing a full re-download of every feed.
+most common reason a scheduled job is skipped. A **second attempt at 05:43 UTC** exists because that
+scheduler is best-effort and does drop runs under load; it is not a second build, since the feed
+cache is aged at 20 hours and so the retry reuses the first attempt's bodies, rebuilds byte-identical
+output and publishes nothing. You can also start a run by hand from the **Actions** tab (Run
+workflow), optionally forcing a full re-download of every feed.
+
+Freshness is enforced in code, not left to the cache: `tools/fetch.js` re-downloads any cached feed
+body older than **20 hours**, measured from the provenance recorded beside the body rather than from
+the file's mtime (a restored CI cache hands every file a brand-new mtime). A daily run therefore
+always asks the upstreams for their current copy, while a second run on the same day stays cheap. A
+feed whose refresh fails keeps serving the body already on disk instead of dropping out of the list.
 
 A run that finds no change publishes nothing: the last step compares the rebuilt file and only
 commits when it actually differs. Two more properties matter if you are relying on it:
@@ -359,9 +368,9 @@ node tools/referral-gaps.js  # refreshes REFERRAL-GAPS.md; --check verifies inst
 ```
 
 `npm run pipeline` runs fetch, build, audit, coverage-gap, benchmark, the source documentation,
-stats and the referral report in sequence. `tools/fetch.js` only understands `--force` — its default
-behaviour is already to
-reuse any cached feed body larger than 20 bytes, so there is no `--missing` to pass.
+stats and the referral report in sequence. `tools/fetch.js` only understands `--force`: by default it
+reuses a cached feed body when the provenance recorded beside it is **less than 20 hours old** and
+re-downloads it otherwise, so there is no `--missing` to pass.
 `node tools/build.js --no-compile` reuses `dist/.compiled.raw`; `node tools/build.js --out <path>`
 writes the list somewhere else.
 

@@ -5,18 +5,29 @@
 # leaves the previously published file in place, so subscribers keep the last known-good list
 # instead of receiving a broken one.
 #
-# Why this is ordinary, permitted use of GitHub Actions rather than abuse: one short job a day on a
+# Why this is ordinary, permitted use of GitHub Actions rather than abuse: one build a day on a
 # public repository, running on standard GitHub-hosted runners well inside the free allowance, with
-# a hard 45-minute timeout and a single-run concurrency group so it can never pile up. It downloads
-# public domain lists, rebuilds a text file, and commits it back to the same repository. There is no
-# commercial resale, no proxying or mining, no attempt to evade rate limits, and no private data.
+# a hard 45-minute timeout and a single-run concurrency group so it can never pile up. A second
+# scheduled attempt exists only because GitHub's scheduler is best-effort; it reuses the first
+# attempt's feed bodies and publishes nothing when they are unchanged, and it does real work only
+# when the first attempt never ran at all. It downloads public domain lists, rebuilds a text file,
+# and commits it back to the same repository. There is no commercial resale, no proxying or mining,
+# no attempt to evade rate limits, and no private data.
 name: build
 
 on:
   schedule:
-    # Daily at 03:17 UTC. Off the hour on purpose: GitHub's scheduled runners are heavily
-    # congested at :00, and a delayed start is the most common cause of a skipped cron run.
+    # Daily at 03:17 UTC, which is 11:17 in UTC+8. Off the hour on purpose: GitHub's scheduled
+    # runners are heavily congested at :00, and a delayed start is the most common cause of a
+    # skipped cron run. 03:00-06:00 UTC is also the quietest stretch of the day - US night, EU
+    # early morning - so the run starts close to its slot rather than queueing behind a peak.
     - cron: '17 3 * * *'
+    # A second attempt at 05:43 UTC, far enough after the first that it cannot still be running.
+    # GitHub's scheduler is best-effort and does drop runs under load; without this, a single
+    # dropped cron leaves subscribers two days behind. tools/fetch.js ages its cache at 20 hours,
+    # so this attempt reuses the 03:17 bodies, rebuilds byte-identical output and publishes
+    # nothing - it only does real work when the first attempt never happened.
+    - cron: '43 5 * * *'
   workflow_dispatch:
     inputs:
       force_refetch:
