@@ -5,7 +5,7 @@ DNS Shield 是一份 DNS 层屏蔽列表，用于拦截广告、跟踪器、遥�
 `@@||domain^` 例外规则，不含外观过滤规则（cosmetic rules）、脚本注入规则（scriptlet）和 `$`
 修饰符。正因如此，它由 DNS 解析器消费，而不是浏览器扩展：可用于 AdGuard Home、AdGuard DNS、
 Pi-hole（需按惯例转换成 hosts 格式）、dnsmasq 和 blocky。当前发布文件包含
-**517,007 条屏蔽规则和 19 条例外规则**，共 11,758,480 字节（11.21 MiB）。
+**516,987 条屏蔽规则和 19 条例外规则**，共 11,758,131 字节（11.21 MiB）。
 
 ## 为什么选择这个列表
 
@@ -28,12 +28,12 @@ Pi-hole（需按惯例转换成 hosts 格式）、dnsmasq 和 blocky。当前发
 
   | 同类列表 | 其规则数 | 我们同时屏蔽的比例 |
   | --- | --- | --- |
-  | OISD Big | 240,434 | 95.1% |
+  | OISD Big | 240,418 | 95.1% |
   | HaGeZi's Pro | 198,605 | 94.5% |
   | AdRules DNS List | 198,109 | 95.4% |
-  | AdGuard DNS filter | 178,197 | 96.8% |
+  | AdGuard DNS filter | 178,228 | 96.8% |
 
-  四者并集共 541,509 条规则，本列表覆盖其中 **95.5%**；有 24,502 条规则只存在于这些列表中。
+  四者并集共 541,489 条规则，本列表覆盖其中 **95.5%**；有 24,502 条规则只存在于这些列表中。
   剩下的差距是被解释清楚的，而不是被隐藏的：`tools/coverage-gap.js` 会把每一条未收录的同类规则
   归入“符合预期”（已被上级域名的规则覆盖，或被排除项、守卫、白名单、例外规则放行）或“缺陷”，
   在参考运行中四份列表全部报告 `0 are defects`，且推导出的规则集与发布文件完全对得上。
@@ -43,7 +43,7 @@ Pi-hole（需按惯例转换成 hosts 格式）、dnsmasq 和 blocky。当前发
   `data/extra-block.txt` 中的。在同一把尺子上，AdGuard DNS filter 屏蔽 23 条、AdRules DNS List
   18 条、OISD Big 4 条、HaGeZi's Pro 2 条。
 
-代价是真实的，也值得直说：517,007 条规则是 OISD Big 的 240,434 条的两倍多，文件体积 11.21 MiB。
+代价是真实的，也值得直说：516,987 条规则是 OISD Big 的 240,418 条的两倍多，文件体积 11.21 MiB。
 因此它并不适合内存紧张的软路由，也不适合按流量计费的手机。`dist/audit.log` 里还长期带着一条警告：
 十四个两用型短链接与 DNS 服务（bit.ly、tinyurl.com、adf.ly 等）因为被滥用类订阅源收录而被整域屏蔽，
 通过这些服务分享普通链接会失效——这是审计日志中记录的刻意决定，不是悄悄发生的副作用。
@@ -89,8 +89,8 @@ GitHub 会停用「连续 60 天无任何活动」的仓库里的定时工作流
 
 AdGuard Home 是**用白名单过滤器去覆盖黑名单**的。你安装的任何白名单里只要有一条 `@@` 规则，就能
 穿透本列表——不管当前启用了哪几条黑名单；而且**关掉黑名单并不会关掉白名单**。一个实测数字：
-HaGeZi's Allowlist Referral（用来让联盟/返利链接能正常跳转的那条）会从本列表中释放 273 个主机名、
-覆盖 250 个可注册域，其中包含 `adjust.com`、`appsflyer.com`、`a9.com`、`ad.doubleclick.net`、
+HaGeZi's Allowlist Referral（用来让联盟/返利链接能正常跳转的那条）会从本列表中释放 272 个主机名、
+覆盖 249 个可注册域，其中包含 `adjust.com`、`appsflyer.com`、`a9.com`、`ad.doubleclick.net`、
 `adform.net` 和 `amazon-adsystem.com`。
 
 两个工具把这件事从"看不见"变成"看得见"：
@@ -142,7 +142,7 @@ sed -e '/^!/d' -e '/^@@/d' -e 's/^||\(.*\)\^$/0.0.0.0 \1/' dns-shield.txt > dns-
 addn-hosts=/etc/dnsmasq.d/dns-shield.hosts
 ```
 
-需要留意：517,007 行的 `addn-hosts` 文件对 dnsmasq 来说负担很重，因为它会把 hosts 条目常驻内存
+需要留意：516,987 行的 `addn-hosts` 文件对 dnsmasq 来说负担很重，因为它会把 hosts 条目常驻内存
 ——小型软路由上适用同样的内存顾虑。
 
 ## 它屏蔽什么，以及刻意不做什么
@@ -228,7 +228,7 @@ SDK；挖矿域名；钓鱼、恶意软件分发与诈骗域名；以及中国�
 - `data/private-exclusions.txt` — 13 条项目级排除项（`localhost`、`invalid`、`onion` 等保留名与
   反向解析域），在白名单阶段之前生效。
 - `data/extra-block.txt` — 人工补丁文件，3 条规则。
-- `dist/dns-shield.txt` — 发布产物：517,007 条屏蔽规则、19 条例外规则、11.21 MiB。
+- `dist/dns-shield.txt` — 发布产物：516,987 条屏蔽规则、19 条例外规则、11.21 MiB。
 - `REFERRAL-GAPS.md` — 自动生成：一条白名单过滤器会从发布文件中释放哪些域名。
 - `dist/build.log`、`dist/audit.log`、`dist/benchmark.txt`、`dist/stats.json` — 参考构建产生的日志与
   统计摘要。
@@ -276,10 +276,14 @@ node tools/referral-gaps.js  # 刷新 REFERRAL-GAPS.md；加 --check 则只校�
 前面的静态检查只是把规则文本与规则文本对比。`tools/agh-live-check.js` 更进一步：它会问一个正在
 运行的 AdGuard Home，浏览器真正查询的主机名到底有没有被过滤。它需要一台一次性实例监听
 `127.0.0.1:13000`（DNS 在 `15353`），并由 `tools/serve-dist.js` 在 8123 端口本地提供清单；
-完整步骤见 `ARCHITECTURE.md` 的 “Live verification” 一节。通过 `AGH_BASE`、`AGH_USER`、
-`AGH_PASS` 可以指向任意实例，`node tools/cleanup-live-check.js` 负责事后清理临时文件。
+完整步骤见 `ARCHITECTURE.md` 的 “Live verification” 一节。通过 `AGH_BASE`、`AGH_USER` 可以指向
+任意实例，实例口令要通过环境变量 `AGH_PASS` 提供（PowerShell 用
+`$env:AGH_PASS = Read-Host -AsSecureString`，POSIX shell 用 `export AGH_PASS=...`）。这两个面向
+AdGuard 的工具**刻意不设默认口令**：本仓库是公开的，写进仓库的凭据即使以后被删掉，历史里任何人都
+仍然读得到——所以缺少口令时它们会直接退出并给出提示，而不是自己猜一个。
+`node tools/cleanup-live-check.js` 负责事后清理临时文件。
 
-有两个与具体机器相关的开关值得了解：
+有三个与具体机器相关的开关值得了解：
 
 - `tools/build.js` 默认从全局 npm 路径解析 `@adguard/hostlist-compiler`。执行 `npm install`
   之后，请改为指向本地副本——PowerShell：
@@ -318,7 +322,7 @@ reason=NotFilteredWhiteList   rule=@@||app.adjust.com^
 ——它指出的那条例外**并不在发布文件里**（`grep -F '@@||app.adjust.com^'` 在那里找不到任何东西；构建
 日志显示的恰恰相反：`refused 12 upstream exception(s) covered by the never-whitelist`）。这条规则
 来自一条已安装的**白名单过滤器** HaGeZi's Allowlist Referral，它的用途是让联盟/返利链接能正常跳转。
-那是一个独立的开关：关掉全部黑名单并不会关掉它，而它会从本列表中释放 273 个主机名。
+那是一个独立的开关：关掉全部黑名单并不会关掉它，而它会从本列表中释放 272 个主机名。
 
 关掉它之后，探测结果是 25 个中 22 个被过滤，3 个正常解析均为有意放行。这个教训比修复本身更有价值：
 在解析器上，**黑名单并不是故事的全部**——在下结论说列表没生效之前，先用

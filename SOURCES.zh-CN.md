@@ -171,7 +171,7 @@
 
 | id | Feed 名称 | 上游 URL | 格式 | 刷新 | 用途 | 风险说明 |
 | --- | --- | --- | --- | --- | --- | --- |
-| `allowlist-referral` | HaGeZi's Allowlist Referral (reference only)（936 条）（mode: `allow`） | adguardteam.github.io/HostlistsRegistry/assets/filter_45.txt | @@&#124;&#124;domain^ 放行规则，含通配符 | weekly | 不是本项目的 feed。这是别人会安装的白名单，抓取它只为了让 REFERRAL-GAPS.md 能在任何机器上重新生成，绝不参与编译。 | 对本列表没有风险——它从不参与编译。之所以收录，是因为 AdGuard Home 是用白名单过滤器覆盖黑名单的，所以一旦装上它，不管启用了哪几条黑名单，都会释放本列表拦截的 273 个主机名（包括 adjust.com、appsflyer.com 和 amazon-adsystem.com）。tools/whitelist-impact.js 负责测量，tools/referral-gaps.js 负责记录。 |
+| `allowlist-referral` | HaGeZi's Allowlist Referral (reference only)（936 条）（mode: `allow`） | adguardteam.github.io/HostlistsRegistry/assets/filter_45.txt | @@&#124;&#124;domain^ 放行规则，含通配符 | weekly | 不是本项目的 feed。这是别人会安装的白名单，抓取它只为了让 REFERRAL-GAPS.md 能在任何机器上重新生成，绝不参与编译。 | 对本列表没有风险——它从不参与编译。之所以收录，是因为 AdGuard Home 是用白名单过滤器覆盖黑名单的，所以一旦装上它，不管启用了哪几条黑名单，都会放行本列表拦截的数百个主机名（其中包括 adjust.com、appsflyer.com 和 amazon-adsystem.com）。这里刻意不写死具体条数，因为它会随着两份列表的更新而变化：REFERRAL-GAPS.md 逐一列出被放行的主机，tools/whitelist-impact.js 可以测量任何白名单文件。 |
 
 已抓取: 1/1。条目数是最近一次抓取到 .cache/sources/ 的行数，运行时可能变化。
 

@@ -307,7 +307,7 @@ module.exports = [
         // what installing it would cost. Counting it as a feed would misdescribe the product.
         required: false,
         refresh: 'weekly',
-        risk: 'None to this list - it is never compiled in. It is here because AdGuard Home applies allowlist filters OVER blocklists, so installing it releases 273 of our blocked hostnames (including adjust.com, appsflyer.com and amazon-adsystem.com) no matter which blocklists are enabled. tools/whitelist-impact.js measures it; tools/referral-gaps.js documents it.',
-        riskZh: '对本列表没有风险——它从不参与编译。之所以收录，是因为 AdGuard Home 是用白名单过滤器覆盖黑名单的，所以一旦装上它，不管启用了哪几条黑名单，都会释放本列表拦截的 273 个主机名（包括 adjust.com、appsflyer.com 和 amazon-adsystem.com）。tools/whitelist-impact.js 负责测量，tools/referral-gaps.js 负责记录。',
+        risk: 'None to this list - it is never compiled in. It is here because AdGuard Home applies allowlist filters OVER blocklists, so installing it releases several hundred of our blocked hostnames (adjust.com, appsflyer.com and amazon-adsystem.com among them) no matter which blocklists are enabled. The exact current count is deliberately not written here, because it moves whenever either list changes: REFERRAL-GAPS.md names every released host and tools/whitelist-impact.js measures any allowlist file.',
+        riskZh: '对本列表没有风险——它从不参与编译。之所以收录，是因为 AdGuard Home 是用白名单过滤器覆盖黑名单的，所以一旦装上它，不管启用了哪几条黑名单，都会放行本列表拦截的数百个主机名（其中包括 adjust.com、appsflyer.com 和 amazon-adsystem.com）。这里刻意不写死具体条数，因为它会随着两份列表的更新而变化：REFERRAL-GAPS.md 逐一列出被放行的主机，tools/whitelist-impact.js 可以测量任何白名单文件。',
     },
 ];

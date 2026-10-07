@@ -8,6 +8,9 @@
  *   4. send real DNS queries through the instance's own resolver on port 15353
  *
  * Usage: node tools/agh-live-check.js <list-url> <domain> [domain ...]
+ *
+ * AGH_PASS must be set; the password has no default, because this file is public and a credential
+ * committed here stays readable even after a later commit deletes the line.
  */
 'use strict';
 
@@ -16,7 +19,13 @@ const dgram = require('dgram');
 const BASE = process.env.AGH_TEST_BASE || 'http://127.0.0.1:13000';
 const DNS_PORT = Number(process.env.AGH_TEST_DNS_PORT || 15353);
 const USER = process.env.AGH_USER || 'admin';
-const PASS = process.env.AGH_PASS || 'admin123';
+const PASS = process.env.AGH_PASS;
+if (!PASS) {
+    console.error('AGH_PASS is not set. Export the AdGuard Home password first:');
+    console.error('  $env:AGH_PASS = "..."   # Windows PowerShell');
+    console.error('  export AGH_PASS=...     # POSIX shell');
+    process.exit(2);
+}
 const AUTH = 'Basic ' + Buffer.from(`${USER}:${PASS}`).toString('base64');
 const LIST_NAME = 'DNS Shield';
 

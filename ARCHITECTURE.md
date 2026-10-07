@@ -194,6 +194,10 @@ after `add_url` reports `NotFilteredNotFound` for every name while `rules_count`
 which is why the check waits for a non-zero, stable `rules_count` and the recorded run was taken
 after a restart.
 
+Both AdGuard-facing tools take their credential from `AGH_PASS` and have no fallback value. A
+default password in a public repository is a leak that survives the commit which removes it, so the
+tools print how to export the variable and exit instead.
+
 The result of the recorded run (2026-10-07, AdGuard Home v0.107.79, list `517,007` block rules):
 21 of 25 probe names filtered at DNS level, and AdGuard's own rule attribution agreed with the
 curve for every one of them. The four that resolved are the intended allows - `github.io` (guard),
@@ -221,7 +225,7 @@ Allowlist Referral, whose stated purpose is keeping affiliate and referral links
 The architectural consequence is the part worth keeping: **allowlist filters are a separate switch
 from blocklists.** Disabling every blocklist does not disable an allowlist, so a list can be
 perfectly correct and still be silently overridden by an allowlist the operator forgot about. On the
-recorded instance that filter released 273 hostnames across 250 registrable domains, including
+recorded instance that filter released 272 hostnames across 249 registrable domains, including
 `adjust.com`, `appsflyer.com`, `a9.com`, `ad.doubleclick.net`, `adform.net` and
 `amazon-adsystem.com`.
 
@@ -278,7 +282,7 @@ allow) or the byte count (11,758,131).
 
 ## Known limitations
 
-- **Size.** 11.21 MiB and 517,007 rules is roughly twice OISD Big. It suits a home DNS resolver and
+- **Size.** 11.21 MiB and 516,987 rules is roughly twice OISD Big. It suits a home DNS resolver and
   a desktop client; it is a poor fit for a memory-constrained router or a metered mobile
   connection. A lighter variant is an open item.
 - **Four aggregate inputs by decision.** OISD Big, HaGeZi's Pro, AdRules DNS List and AdGuard DNS

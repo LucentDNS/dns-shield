@@ -21,7 +21,9 @@
  *   node tools/agh-toggle.js others off | on
  *   node tools/agh-toggle.js test add <url> | test remove
  *
- * Point it at another instance with AGH_BASE / AGH_USER / AGH_PASS.
+ * Point it at another instance with AGH_BASE / AGH_USER / AGH_PASS. The password has no default on
+ * purpose: this file is public, and a credential committed here would be readable by anyone even
+ * after the line is deleted from a later commit.
  */
 'use strict';
 
@@ -30,7 +32,14 @@ const path = require('path');
 
 const BASE = process.env.AGH_BASE || 'http://127.0.0.1:3000';
 const USER = process.env.AGH_USER || 'admin';
-const PASS = process.env.AGH_PASS || 'admin123';
+const PASS = process.env.AGH_PASS;
+if (!PASS) {
+    console.error('AGH_PASS is not set. Export the AdGuard Home password first, e.g.');
+    console.error('  $env:AGH_PASS = Read-Host -AsSecureString   # Windows PowerShell');
+    console.error('  export AGH_PASS=...                          # POSIX shell');
+    console.error('The password is deliberately not stored in this repository.');
+    process.exit(2);
+}
 const AUTH = 'Basic ' + Buffer.from(`${USER}:${PASS}`).toString('base64');
 const DIST = path.join(__dirname, '..', 'dist');
 const SNAPSHOT = path.join(DIST, 'agh-filters-before.json');

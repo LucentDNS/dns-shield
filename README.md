@@ -6,7 +6,7 @@ malware and scam domains. It ships as one plain text file in AdGuard / DNS rule 
 and no `$` modifiers. Because it contains nothing but domain rules, it is consumed by a DNS
 resolver rather than by a browser extension, and it works in AdGuard Home, AdGuard DNS, Pi-hole
 (after the usual hosts-format conversion), dnsmasq and blocky. The published file currently holds
-**517,007 block rules and 19 exception rules**, 11,758,480 bytes (11.21 MiB).
+**516,987 block rules and 19 exception rules**, 11,758,131 bytes (11.21 MiB).
 
 ## Why this list
 
@@ -34,12 +34,12 @@ which:
 
   | Peer | Their rules | Share we also block |
   | --- | --- | --- |
-  | OISD Big | 240,434 | 95.1% |
+  | OISD Big | 240,418 | 95.1% |
   | HaGeZi's Pro | 198,605 | 94.5% |
   | AdRules DNS List | 198,109 | 95.4% |
-  | AdGuard DNS filter | 178,197 | 96.8% |
+  | AdGuard DNS filter | 178,228 | 96.8% |
 
-  Across the union of all four (541,509 rules), this list covers **95.5%**; 24,502 rules exist only
+  Across the union of all four (541,489 rules), this list covers **95.5%**; 24,502 rules exist only
   in those lists and not here. The remaining distance is explained, not hidden:
   `tools/coverage-gap.js` classifies every un-carried peer rule as intended (covered by an ancestor
   rule, or released by an exclusion, a guard, the whitelist or an exception) or as a bug, and for
@@ -51,8 +51,8 @@ which:
   `data/never-whitelist.txt` and `data/extra-block.txt` because they are telemetry endpoints. On
   the same ruler AdGuard DNS filter blocks 23, AdRules DNS List 18, OISD Big 4 and HaGeZi's Pro 2.
 
-The tradeoff is real and worth stating plainly: 517,007 rules is more than twice OISD Big's
-240,434, and the file is 11.21 MiB. That makes this list a poor fit for a memory-constrained
+The tradeoff is real and worth stating plainly: 516,987 rules is more than twice OISD Big's
+240,418, and the file is 11.21 MiB. That makes this list a poor fit for a memory-constrained
 router or a phone on a metered connection. `dist/audit.log` also carries one standing warning:
 fourteen dual-use URL shorteners and DNS providers (bit.ly, tinyurl.com, adf.ly and similar) are
 blocked whole because abuse feeds list them; ordinary link sharing through those services breaks,
@@ -104,7 +104,7 @@ months.
 AdGuard Home applies **whitelist filters over blocklists**. An `@@` rule in any allowlist you have
 installed punches through this list regardless of which blocklists are enabled, and disabling a
 blocklist does not disable an allowlist. One concrete measurement: HaGeZi's Allowlist Referral
-(the one that keeps affiliate and referral links redirecting) releases 273 hostnames across 250
+(the one that keeps affiliate and referral links redirecting) releases 272 hostnames across 249
 registrable domains from this list — among them `adjust.com`, `appsflyer.com`, `a9.com`,
 `ad.doubleclick.net`, `adform.net` and `amazon-adsystem.com`.
 
@@ -161,7 +161,7 @@ sed -e '/^!/d' -e '/^@@/d' -e 's/^||\(.*\)\^$/0.0.0.0 \1/' dns-shield.txt > dns-
 addn-hosts=/etc/dnsmasq.d/dns-shield.hosts
 ```
 
-Be aware that a 517,007-line `addn-hosts` file is heavy for dnsmasq, which keeps hosts entries in
+Be aware that a 516,987-line `addn-hosts` file is heavy for dnsmasq, which keeps hosts entries in
 memory — the same memory caveat that applies to a small router applies here.
 
 ## What it blocks, and what it deliberately does not
@@ -260,7 +260,7 @@ deleting a line from the protection set.
 - `data/private-exclusions.txt` — 13 project-level exclusions (reserved names such as `localhost`,
   `invalid`, `onion` and the reverse-DNS zones) applied before the whitelist stage.
 - `data/extra-block.txt` — the curated patch file, 3 rules.
-- `dist/dns-shield.txt` — the published product: 517,007 block rules, 19 exception rules, 11.21 MiB.
+- `dist/dns-shield.txt` — the published product: 516,987 block rules, 19 exception rules, 11.21 MiB.
 - `REFERRAL-GAPS.md` — generated: what an allowlist filter would release from the published file.
 - `dist/build.log`, `dist/audit.log`, `dist/benchmark.txt`, `dist/stats.json` — logs and summary
   from the reference build.
@@ -315,10 +315,13 @@ The static checks compare rule text against rule text. `tools/agh-live-check.js`
 asks a running AdGuard Home whether it actually filters the hostnames a browser would ask for. It
 expects a throwaway instance on `127.0.0.1:13000` (DNS on `15353`) and the list served locally by
 `tools/serve-dist.js` on port 8123; `ARCHITECTURE.md` ("Live verification") has the full recipe.
-Point it at any instance with `AGH_BASE`, `AGH_USER` and `AGH_PASS`. `node tools/cleanup-live-check.js`
-removes the scratch files afterwards.
+Point it at any instance with `AGH_BASE` and `AGH_USER`, and export that instance's password as
+`AGH_PASS`. The two AdGuard-facing tools have **no default password on purpose**: this repository is
+public, and a credential committed here stays readable to anyone even after a later commit deletes
+the line, so they exit with instructions instead of trying one of their own.
+`node tools/cleanup-live-check.js` removes the scratch files afterwards.
 
-Two machine-specific knobs are worth knowing about:
+Three machine-specific knobs are worth knowing about:
 
 - `tools/build.js` resolves `@adguard/hostlist-compiler` from a global npm path by default. After
   `npm install`, point it at the local copy instead — PowerShell:
@@ -363,7 +366,7 @@ reason=NotFilteredWhiteList   rule=@@||app.adjust.com^
 nothing there; the build log shows the opposite, `refused 12 upstream exception(s) covered by the
 never-whitelist`). The rule came from an installed **whitelist filter**, HaGeZi's Allowlist Referral,
 which keeps affiliate and referral links redirecting. That filter is a separate switch: disabling
-every blocklist does not disable it, and it releases 273 hostnames from this list.
+every blocklist does not disable it, and it releases 272 hostnames from this list.
 
 With it off, the probe is 22 of 25 filtered, and the three that resolve are intended. The lesson is
 worth more than the fix: on a resolver, *the blocklist is not the whole story* — audit your
