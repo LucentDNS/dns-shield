@@ -297,14 +297,60 @@ Two rejected alternatives are worth recording, because both look simpler:
   checkout, not of the data, so a cold cache (evicted after 7 days, or a different runner image)
   silently changed the published bytes. The revision line removes that dependency.
 
-`!` comments carry no rules, so moving the stamp never touches the rule set (516,987 block / 19
-allow) or the byte count (11,758,131).
+`!` comments carry no rules, so moving the stamp never touches the rule set (537,260 block / 28
+allow) or the byte count (12,344,395).
+
+## Cross-feed compression
+
+`hostlist-compiler`'s `Compress` transformation drops a rule when **any ancestor is already
+present**: `||a.example.com^` is redundant once `||example.com^` exists. Inside one feed that is
+correct - the feed's own broad rule is meant to cover its own subdomains. Across feeds it silently
+destroys them.
+
+A single feed shipping the bare `cloudfront.net` therefore deleted the roughly 1,900
+`*.cloudfront.net` ad-serving distributions that four other feeds spell out one by one. Merging all
+24 blocking feeds into one config lost **23,051 hostnames that some feed had named in full**, and
+because they were gone before the release stages ran, `data/guards.txt` could not protect them
+either: a guard releases an apex while keeping its subdomains, but there were no subdomains
+left to keep. `||cloudfront.net^` survived in the compiled output and was then correctly released
+by the guard, leaving its 1,900 named children unblocked and unaccounted for.
+
+The fix is a snapshot, not a second rule list:
+
+1. **stage 2a - per-feed snapshot.** Every blocking feed is compiled on its own and the results are
+   unioned into `dist/.perfeed.raw`: what the feeds *say*, free of any cross-feed interaction. It is
+   a property of the feed set, so it is cached against the list revision rather than rebuilt every
+   run.
+2. **stage 2b - merged compile.** The published file is still produced by one merged config, which
+   keeps the compiler's genuine within-feed compression.
+3. **restore before any release.** Every name the snapshot carries and the merge did not is added
+   back **before** stage 3, so upstream exclusions, guards, whitelist trees, the never-whitelist and
+   the exception layer all still get to rule on it. Order is the entire point: releasing
+   `cloudfront.net` is a decision about that apex, and it was never a decision about the 1,900
+   distributions other feeds name explicitly.
+
+Compiling every feed separately and merging-then-restoring converge on the **identical rule set**
+(537,260 rules either way, symmetric difference zero), so the restore is not an approximation - it
+recovers exactly what merging lost and nothing more. Measured effect: +20,273 rules, coverage of the
+four reference lists rising from 95.5% to 98.9% of their union, and the count of rules that all four
+carry and we do not falling from 1,950 to 1,763.
+
+That residue is a policy outcome, not a compile defect. 1,378 of the 1,763 are `*.cloudfront.net`
+distributions, and every one of them sits under a `data/whitelist.txt` whole-tree entry
+(`@cloudfront.net`, `@amazonaws.com`, `@baidu.com`, `@qq.com` …) that exists so ordinary sites on
+those shared platforms resolve. The restore puts those names back into the blocked set, and the
+whitelist then releases them on purpose. Closing the residue would mean narrowing those trees and
+accepting the breakage they were added to prevent, so it is left as an explicit, measured tradeoff.
 
 ## Known limitations
 
-- **Size.** 11.21 MiB and 516,987 rules is roughly twice OISD Big. It suits a home DNS resolver and
+- **Size.** 11.77 MiB and 537,260 rules is roughly twice OISD Big. It suits a home DNS resolver and
   a desktop client; it is a poor fit for a memory-constrained router or a metered mobile
   connection. A lighter variant is an open item.
+- **Whole-tree whitelist entries cost blocked ad hosts.** 1,763 rules that all four reference lists
+  carry are released because they live under a shared-platform tree in `data/whitelist.txt`. The
+  cost of each entry is now measurable (`npm run benchmark` and the `whitelisted` bucket in
+  `tools/coverage-gap.js`), and narrowing one is a deliberate edit rather than a side effect.
 - **Four aggregate inputs by decision.** OISD Big, HaGeZi's Pro, AdRules DNS List and AdGuard DNS
   filter are included as a coverage layer. They are compiled products, and the project's original
   rule was raw feeds only. The tradeoff is documented in `SOURCES.md`: raw feeds alone left tens of

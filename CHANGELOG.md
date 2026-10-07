@@ -17,6 +17,22 @@ See `ARCHITECTURE.md` ("Reproducible output") for how both values are derived.
 
 ## Unreleased
 
+- **Cross-feed compression no longer eats rules.** `hostlist-compiler`'s `Compress` drops a rule
+  when any ancestor is present, which is correct within one feed and destructive across feeds: the
+  bare `cloudfront.net` in `easyprivacy-thirdparty` was deleting ~1,900 `*.cloudfront.net`
+  ad distributions that four other feeds name individually, and because they vanished before the
+  release stages ran, `data/guards.txt` could not protect them either. The build now compiles every
+  feed on its own into a snapshot (`dist/.perfeed.raw`, cached against the list revision), and
+  restores everything the merge erased **before** any release stage, so exclusions, guards,
+  whitelist trees, the never-whitelist and the exception layer all still rule on those names.
+  Merging-then-restoring and compiling every feed separately converge on the identical rule set.
+  Effect: **+20,273 rules** (516,987 → 537,260), coverage of the four reference lists rising from
+  95.5% to 98.9% of their union, and rules carried by all four peers that we lack falling from
+  1,950 to 1,763. See `ARCHITECTURE.md` ("Cross-feed compression").
+- **`tools/coverage-gap.js` replays the restore.** Its model previously derived the emitted set as
+  "compiled minus releases" and reported the restored names as 20,275 unmodelled rules. It now reads
+  `dist/.perfeed.raw` and runs the restored names through the same release tests the build does, so
+  the derived set reconciles against the published file exactly again (`0 are defects`).
 - **Third-party attribution is now enforced.** `THIRD-PARTY-NOTICES.md` records who owns each feed,
   what it is licensed under, and the one feed whose licence (Creative Commons BY-NC 4.0) forbids
   commercial use. `tools/audit.js` fails the build when a feed is compiled in without a row there,

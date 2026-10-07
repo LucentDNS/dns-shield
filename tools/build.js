@@ -19,7 +19,18 @@
  *   5. never-whitelist       -> domains no whitelist may ever release
  *   6. upstream exceptions   -> emit @@ allow rules for confirmed false positives
  *
- * Usage: node tools/build.js [--no-compile] [--out dist/dns-shield.txt]
+ * Cross-feed compression, and why this build restores what it erases:
+ * `Compress` drops a rule when ANY ancestor is already present, which is correct inside one feed
+ * and wrong across feeds - a feed that ships the bare `cloudfront.net` silently deletes the
+ * 1,900 `*.cloudfront.net` distributions four other feeds spell out one by one. Merging every feed
+ * into one config therefore lost 23,051 hostnames that a feed had named in full. Stage 2a compiles
+ * each feed on its own to take a snapshot of what the feeds actually say, and stage 2c-adjacent
+ * code below restores the difference BEFORE any release stage runs, so exclusions, guards, the
+ * whitelist trees and the never-whitelist all still get to rule on the restored names. Compiling
+ * every feed separately and merging-and-restoring converge on the identical rule set (verified),
+ * and the merged form is kept because it preserves the compiler's within-feed compression.
+ *
+ * Usage: node tools/build.js [--no-compile] [--refresh-snapshot] [--out dist/dns-shield.txt]
  */
 const fs = require('fs');
 const path = require('path');
@@ -153,12 +164,15 @@ function compilerSource(catalogueEntry, name) {
     };
 }
 
-function compilerConfig(blocking, excludedIds) {
+const TRANSFORMATIONS = ['RemoveComments', 'Deduplicate', 'Compress'];
+
+function compilerConfig(blocking, excludedIds, extraSources) {
     const sources = blocking.map((s) => compilerSource(s));
     if (excludedIds.size) {
         const ex = SOURCES.find((s) => s.id === 'adguard-exclusions');
         if (ex) sources.push(compilerSource(ex, 'AdGuard upstream exclusions'));
     }
+    (extraSources || []).forEach((s) => sources.push(s));
     return {
         name: NAME,
         description: 'Advertisement, tracker, telemetry, phishing, malware and scam domains for DNS-level blocking.',
@@ -166,12 +180,66 @@ function compilerConfig(blocking, excludedIds) {
         license: 'GPL-3.0',
         version: VERSION,
         sources,
-        transformations: ['RemoveComments', 'Deduplicate', 'Compress'],
+        transformations: TRANSFORMATIONS,
     };
 }
 
-function runCompiler(config) {
-    const tmp = path.join(os.tmpdir(), `dns-shield-compile-${Date.now()}.json`);
+/**
+ * What the feeds carry, as opposed to what survives being merged.
+ *
+ * hostlist-compiler's Compress step drops a rule when any ANCESTOR is already blocked, because
+ * that ancestor covers it. Inside one feed that is sound. Across feeds it destroys evidence:
+ * easyprivacy-thirdparty ships a bare `cloudfront.net`, which becomes `||cloudfront.net^` and
+ * silently deletes 1,650 `*.cloudfront.net` rules that four other feeds name individually. The
+ * guard then releases the apex - by design, CloudFront hosts plenty of legitimate sites - and
+ * those 1,650 ad servers are blocked by nothing at all. Nobody wrote a whitelist entry for them;
+ * they were never in the file.
+ *
+ * So the inputs are compiled one feed at a time and the results unioned. A feed's own broad rule
+ * can still collapse its own subdomains, but it can no longer reach into a sibling feed. Each
+ * compile is a separate process: the compiler memoises dedup state per invocation, and 27 short
+ * processes cost far less than one surprising interaction.
+ */
+function runCompilerPerFeed(blocking, excludedIds) {
+    const seen = new Set();
+    const parts = [];
+    const feeds = [];
+    const t0 = Date.now();
+    const inputs = blocking.map((s) => ({ s, config: compilerConfig([s], new Set()), feed: true }));
+    if (excludedIds.size) {
+        const ex = SOURCES.find((s) => s.id === 'adguard-exclusions');
+        // The exclusions feed is a policy list, not a blocking feed: it must not become a source
+        // whose own rules participate in compression. Handing it to the compiler alone yields its
+        // literal rule text, which is all stage 3 needs.
+        if (ex) inputs.push({ s: ex, config: compilerConfig([], new Set(), [compilerSource(ex, 'AdGuard upstream exclusions')]), feed: false });
+    }
+    inputs.forEach(({ s, config, feed }, i) => {
+        const text = runCompiler(config, `${s.id} (${i + 1}/${inputs.length})`);
+        const own = new Set();
+        text.split('\n').forEach((line) => {
+            const l = line.trim();
+            if (feed && l) {
+                const m = l.match(RE_BLOCK);
+                if (m && RE_LABEL.test(m[1])) own.add(m[1]);
+            }
+            if (!l || seen.has(l)) return;
+            seen.add(l);
+            parts.push(l);
+        });
+        if (feed) feeds.push(own);
+    });
+    const secs = ((Date.now() - t0) / 1000).toFixed(1);
+    log(`hostlist-compiler: ${inputs.length} per-feed compiles in ${secs}s, ${parts.length.toLocaleString()} distinct lines`);
+    // `union` is the blocking feeds only. The exclusions list is compiled alongside so that stage 3
+    // can read its rules, but it is a policy list: nothing it names is a domain we intend to block,
+    // so it must not be able to smuggle entries into the snapshot.
+    const union = new Set();
+    feeds.forEach((own) => own.forEach((d) => union.add(d)));
+    return { text: parts.join('\n'), union };
+}
+
+function runCompiler(config, label) {
+    const tmp = path.join(os.tmpdir(), `dns-shield-compile-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.json`);
     fs.writeFileSync(tmp, JSON.stringify(config, null, 2), 'utf8');
     // src/index.js exports the compile function itself (module.exports = compile), not a
     // { build } namespace, it ships as CJS, and it resolves to an ARRAY of rules rather than
@@ -183,14 +251,15 @@ function runCompiler(config) {
     const t0 = Date.now();
     const r = spawnSync(process.execPath, ['-e', script], { encoding: 'utf8', timeout: 600000, maxBuffer: 1 << 28 });
     const secs = ((Date.now() - t0) / 1000).toFixed(1);
+    fs.rmSync(tmp, { force: true });
     if (r.status !== 0 || !fs.existsSync(tmp + '.out')) {
+        fs.rmSync(tmp + '.out', { force: true });
         const detail = (r.stderr || '').trim().split('\n').slice(0, 6).join(' | ');
-        throw new Error(`hostlist-compiler failed after ${secs}s: ${detail || `exit ${r.status}`}`);
+        throw new Error(`hostlist-compiler failed after ${secs}s${label ? ` on ${label}` : ''}: ${detail || `exit ${r.status}`}`);
     }
     const text = fs.readFileSync(tmp + '.out', 'utf8');
-    fs.rmSync(tmp, { force: true });
     fs.rmSync(tmp + '.out', { force: true });
-    log(`hostlist-compiler: exit 0 in ${secs}s, ${(text.length / 1048576).toFixed(2)} MiB emitted`);
+    log(`  compiler ${label || 'merged'}: exit 0 in ${secs}s, ${(text.length / 1048576).toFixed(2)} MiB emitted`);
     return text;
 }
 
@@ -295,16 +364,54 @@ function main() {
 
     banner('stage 2  compile blocking rules');
     const excludedIds = available.has(exclusionsId) ? new Set([exclusionsId]) : new Set();
-    const config = compilerConfig(usable, excludedIds);
-    log(`feeding ${config.sources.length} inputs to hostlist-compiler`);
 
+    const shadowGained = new Set();
+    let perFeedUnion = null;
     let compiledText;
+
+    // The snapshot of what the feeds name, taken by compiling every feed on its own. It is a
+    // property of the FEED SET, so it is cached under the current REVISION: recompiling 24 feeds
+    // costs ~20s, and a snapshot from a different feed set would silently compare against the
+    // wrong baseline. `--refresh-snapshot` forces it.
+    const snapPath = path.join(DIST, '.perfeed.raw');
+    const snapRevPath = path.join(DIST, '.perfeed.revision');
+    const refreshSnapshot = process.argv.includes('--refresh-snapshot')
+        || !fs.existsSync(snapPath)
+        || !fs.existsSync(snapRevPath)
+        || fs.readFileSync(snapRevPath, 'utf8').trim() !== REVISION;
+
     if (process.argv.includes('--no-compile') && fs.existsSync(path.join(DIST, '.compiled.raw'))) {
         compiledText = fs.readFileSync(path.join(DIST, '.compiled.raw'), 'utf8');
         log('reusing dist/.compiled.raw (--no-compile)');
     } else {
-        compiledText = runCompiler(config);
+        if (refreshSnapshot) {
+            banner('stage 2a  per-feed snapshot');
+            log(`compiling ${usable.length} feeds separately so a broad rule in one cannot erase a specific rule in another`);
+            const per = runCompilerPerFeed(usable, excludedIds);
+            perFeedUnion = per.union;
+            fs.writeFileSync(snapPath, [...perFeedUnion].map((d) => `||${d}^`).join('\n') + '\n', 'utf8');
+            fs.writeFileSync(snapRevPath, REVISION, 'utf8');
+            log(`what the feeds name: ${perFeedUnion.size.toLocaleString()} hostnames`);
+        } else {
+            log(`per-feed snapshot is current for revision ${REVISION}`);
+        }
+        banner('stage 2b  compile the published rule set');
+        // The published file is still produced by ONE merged config. Merged and per-feed compile of
+        // this feed set converge on the same rule count once the restore below runs, and the merged
+        // form keeps hostlist-compiler's within-feed compression intact; the restore only undoes the
+        // part of it that a sibling feed caused.
+        const config = compilerConfig(usable, excludedIds);
+        log(`feeding ${config.sources.length} inputs to hostlist-compiler as one config`);
+        compiledText = runCompiler(config, 'merged');
         fs.writeFileSync(path.join(DIST, '.compiled.raw'), compiledText, 'utf8');
+    }
+
+    if (!perFeedUnion && fs.existsSync(snapPath)) {
+        perFeedUnion = new Set();
+        fs.readFileSync(snapPath, 'utf8').split('\n').forEach((raw) => {
+            const m = raw.trim().match(RE_BLOCK);
+            if (m && RE_LABEL.test(m[1]) && !RE_IPV4.test(m[1])) perFeedUnion.add(m[1]);
+        });
     }
 
     const blocked = new Set();
@@ -322,6 +429,26 @@ function main() {
     // Snapshot of exactly what the feeds carry. The never-whitelist may only re-assert domains
     // that a feed actually lists - otherwise it becomes a back door for adding rules by hand.
     const fromCompiled = new Set(blocked);
+
+    // ---- restore what a sibling feed's broad rule erased
+    // A name the feeds ship in full, and that the merge dropped as "redundant" under some ANCESTOR,
+    // is restored here - BEFORE the release stages below, so that every policy decision
+    // (exclusions, guards, whitelist trees, upstream exceptions) still gets to look at it and
+    // release it if it has a reason to. That ordering is the whole point: releasing `cloudfront.net`
+    // is a decision about the apex, and a decision about the apex was never a decision about the
+    // 1,900 ad-serving distributions that four feeds name one by one.
+    //
+    // Every name here comes from a feed, never from a hand-written list, so the evidentiary
+    // standard the never-whitelist is held to is met by construction.
+    if (perFeedUnion) {
+        perFeedUnion.forEach((d) => { if (!blocked.has(d)) shadowGained.add(d); });
+        shadowGained.forEach((d) => blocked.add(d));
+        if (shadowGained.size) {
+            const samples = [...shadowGained].slice(0, 8);
+            log(`restored ${shadowGained.size.toLocaleString()} hostnames a sibling feed's broad rule had erased`);
+            log(`  ${samples.join(', ')}${shadowGained.size > 8 ? ` ...+${shadowGained.size - 8}` : ''}`);
+        }
+    }
 
     banner('stage 3  upstream exclusions');
     const exclusions = new Set();

@@ -16,12 +16,12 @@ The published file is rebuilt every day, so its rule count moves by a few hundre
 current figures are always in the file's own header:
 
 ```
-! Contains 516,987 block rules and 19 exception rules.
+! Contains 537,260 block rules and 28 exception rules.
 ! List revision: 6d37dc164e2d
 ```
 
-The numbers quoted below come from the reference build of 2026-10-07: **516,987 block rules,
-19 exception rules, 11.21 MiB**. Treat them as a shape, not a promise — trust the header, or
+The numbers quoted below come from the reference build of 2026-10-07: **537,260 block rules,
+28 exception rules, 11.77 MiB**. Treat them as a shape, not a promise — trust the header, or
 `dist/stats.json`, for today's exact count.
 
 ## Why this list
@@ -39,12 +39,19 @@ which:
   every one.
 - **What this project adds is policy, not detection.** Three things the aggregate lists do not do
   for themselves:
-  - a **never-whitelist** (`data/never-whitelist.txt`, 93 protected domains) so a whitelist can
+  - a **never-whitelist** (`data/never-whitelist.txt`, 95 protected domains) so a whitelist can
     never quietly re-enable a tracker;
   - **infrastructure guards** (`data/guards.txt`, 135 shared CDN/hosting apexes) so one malicious
     tenant does not take a whole platform down with it;
   - **curated patch rules** (`data/extra-block.txt`, 3 entries) for hosts upstream only ever
     publishes in a shape that does not survive normalisation.
+- **It fixes the compiler's cross-feed behaviour instead of living with it.** `Compress` drops a
+  rule when any ancestor is present, so a feed shipping the bare `cloudfront.net` used to delete
+  ~1,900 `*.cloudfront.net` ad distributions that four other feeds name individually. The build now
+  snapshots what each feed says on its own and restores the difference **before** any release stage
+  runs, which recovered 23,394 hostnames and is why coverage below rose by roughly three points.
+  `ARCHITECTURE.md` documents the mechanism and the proof that it converges on the same rule set as
+  compiling every feed separately.
 - **It measures itself instead of asserting.** `tools/benchmark.js` puts this list and the four
   peers on one ruler, and `tools/audit.js` fails the build on a regression. The numbers from the
   reference run (2026-10-07) are — and the peer counts below drift daily too, which is why they are
@@ -52,25 +59,27 @@ which:
 
   | Peer | Their rules | Share we also block |
   | --- | --- | --- |
-  | OISD Big | 240,418 | 95.1% |
-  | HaGeZi's Pro | 198,605 | 94.5% |
-  | AdRules DNS List | 198,109 | 95.4% |
-  | AdGuard DNS filter | 178,228 | 96.8% |
+  | OISD Big | 240,418 | 98.6% |
+  | HaGeZi's Pro | 198,605 | 97.7% |
+  | AdRules DNS List | 198,109 | 98.5% |
+  | AdGuard DNS filter | 178,228 | 98.8% |
 
-  Across the union of all four (541,489 rules), this list covers **95.5%**; 24,502 rules exist only
-  in those lists and not here. The remaining distance is explained, not hidden:
+  Across the union of all four (481,700 rules), this list covers **98.8%**; **5,897** rules exist
+  only in those lists and not here. The remaining distance is explained, not hidden:
   `tools/coverage-gap.js` classifies every un-carried peer rule as intended (covered by an ancestor
   rule, or released by an exclusion, a guard, the whitelist or an exception) or as a bug, and for
   all four peers the reference run reported `0 are defects` with the derived rule set reconciling
-  against the published file exactly.
+  against the published file exactly. Of the 1,763 rules that **all four** peers carry and we do
+  not, 1,378 are `*.cloudfront.net` distributions sitting under a whole-tree whitelist entry kept
+  on purpose - a policy tradeoff, documented rather than papered over.
 - **Over-blocking is measured too.** AdGuard's own 172 hand-written exceptions are used as an
   independent ruler: each one is a host a human already proved broken. This list still blocks
   **2** of them — `sax.sina.com.cn` and `log.mmstat.com`, both pinned deliberately in
   `data/never-whitelist.txt` and `data/extra-block.txt` because they are telemetry endpoints. On
   the same ruler AdGuard DNS filter blocks 23, AdRules DNS List 18, OISD Big 4 and HaGeZi's Pro 2.
 
-The tradeoff is real and worth stating plainly: 516,987 rules is more than twice OISD Big's
-240,418, and the file is 11.21 MiB. That makes this list a poor fit for a memory-constrained
+The tradeoff is real and worth stating plainly: 537,260 rules is more than twice OISD Big's
+240,418, and the file is 11.77 MiB. That makes this list a poor fit for a memory-constrained
 router or a phone on a metered connection. `dist/audit.log` also carries one standing warning:
 fourteen dual-use URL shorteners and DNS providers (bit.ly, tinyurl.com, adf.ly and similar) are
 blocked whole because abuse feeds list them; ordinary link sharing through those services breaks,
@@ -192,7 +201,7 @@ sed -e '/^!/d' -e '/^@@/d' -e 's/^||\(.*\)\^$/0.0.0.0 \1/' dns-shield.txt > dns-
 addn-hosts=/etc/dnsmasq.d/dns-shield.hosts
 ```
 
-Be aware that a 516,987-line `addn-hosts` file is heavy for dnsmasq, which keeps hosts entries in
+Be aware that a 537,260-line `addn-hosts` file is heavy for dnsmasq, which keeps hosts entries in
 memory — the same memory caveat that applies to a small router applies here.
 
 ## What it blocks, and what it deliberately does not
@@ -297,7 +306,7 @@ deleting a line from the protection set.
 - `data/private-exclusions.txt` — 13 project-level exclusions (reserved names such as `localhost`,
   `invalid`, `onion` and the reverse-DNS zones) applied before the whitelist stage.
 - `data/extra-block.txt` — the curated patch file, 3 rules.
-- `dist/dns-shield.txt` — the published product: 516,987 block rules, 19 exception rules, 11.21 MiB.
+- `dist/dns-shield.txt` — the published product: 537,260 block rules, 28 exception rules, 11.77 MiB.
 - `CONTRIBUTING.md` — how to report a false positive (the most useful report there is) and which
   `data/` file a given host belongs in.
 - `SECURITY.md` — what counts as a security problem in a data-only project, and how to report one

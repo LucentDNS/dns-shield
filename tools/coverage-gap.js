@@ -146,6 +146,25 @@ if (process.argv.includes('--debug')) {
         process.exit(0);
     }
 }
+// A sibling feed's broad rule erases a name another feed spells out in full: `Compress` drops a
+// rule when any ancestor is present, which is right inside one feed and wrong across feeds. The
+// build snapshots what every feed says by compiling each one on its own (dist/.perfeed.raw) and
+// restores the difference before any release stage runs. The model has to replay that restore -
+// and the releases that follow it - or every one of those names is misreported. They are fed
+// through the same release tests as the compiled set, because that is exactly what the build does:
+// the restore happens before stage 3, so the whitelist trees still get to rule on these names.
+const perFeedPath = path.join(ROOT, 'dist', '.perfeed.raw');
+if (fs.existsSync(perFeedPath)) {
+    for (const raw of fs.readFileSync(perFeedPath, 'utf8').split('\n')) {
+        const m = raw.trim().match(RE_BLOCK);
+        if (!m || !RE_LABEL.test(m[1]) || compiled.block.has(m[1])) continue;
+        const d = m[1];
+        if (exclusions.has(d) || guards.has(d) || wlExact.has(d)) { released.add(d); continue; }
+        if (subtree(d).some((a) => wlTrees.has(a))) { released.add(d); continue; }
+        blockedInCompiled.add(d);
+    }
+}
+
 // never-whitelist re-asserts protected domains after every release decision. Two ways in:
 //   (a) the feeds carry it, so the compiler emitted it, and a whitelist tree released it;
 //   (b) the feeds carry only its parent, but a whitelist tree entry released that parent's whole

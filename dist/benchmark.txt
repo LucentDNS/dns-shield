@@ -1,20 +1,37 @@
+<<<<<<< Updated upstream
 benchmark  runnervm8df0l  2026-10-07T11:32:35.496Z
+=======
+benchmark  DESKTOP-KRFIFET  2026-10-07T12:26:31.406Z
+>>>>>>> Stashed changes
 
 ============================================================================
 our list
 ============================================================================
+<<<<<<< Updated upstream
   file                              11,758,689 bytes
   block rules                       517,007
   allow rules                       19
+=======
+  file                              12,344,395 bytes
+  block rules                       537,260
+  allow rules                       28
+>>>>>>> Stashed changes
 
 ============================================================================
 coverage against peers
 ============================================================================
   peer                  their rules  we have %   they lack   we lack
+<<<<<<< Updated upstream
   AdGuard DNS filter    178,250      96.8%       5,758       344,515
   HaGeZi's Pro          198,605      94.5%       10,982      329,384
   OISD Big              240,439      95.1%       11,692      288,260
   AdRules DNS List      198,109      95.4%       9,078       327,976
+=======
+  AdGuard DNS filter    178,228      98.8%       2,114       361,146
+  HaGeZi's Pro          198,605      97.7%       4,533       343,188
+  OISD Big              240,418      98.6%       3,378       300,220
+  AdRules DNS List      198,109      98.5%       3,014       342,165
+>>>>>>> Stashed changes
 
   "we have %" is the share of that peer's blocking set we also block - its holes in us.
   "they lack" counts rules that peer has and we do not. "we lack" counts ours it does not have.
@@ -27,7 +44,7 @@ false-positive ruler (AdGuard exceptions)
   ruler entries: 172
 
   list                  blocks a proven-broken host   blocked hosts
-  DNS Shield (ours)     2                             sax.sina.com.cn, log.mmstat.com
+  DNS Shield (ours)     4                             sax.sina.com.cn, app.appsflyer.com, log.mmstat.com, app.adjust.com
   AdGuard DNS filter    23                            swasc.homedepot.com, data.promo.timhortons.ca, data.notify.macys.com, om-ssl.consorsbank.de, belgium.wolterskluwer.com, sedge.nfl.com
   HaGeZi's Pro          2                             r.sascdn.com, proto2ad.durasite.net
   OISD Big              4                             sax.sina.com.cn, proto2ad.durasite.net, tags.crwdcntrl.net, str.hit.gemius.pl
@@ -36,6 +53,7 @@ false-positive ruler (AdGuard exceptions)
 ============================================================================
 verdict
 ============================================================================
+<<<<<<< Updated upstream
   our block rules                     517,007
   union of the four peers             541,508
   largest peer                        OISD Big            240,439
@@ -48,6 +66,20 @@ verdict
     HaGeZi's Pro          10,982
     AdRules DNS List      9,078
     AdGuard DNS filter    5,758
+=======
+  our block rules                     537,260
+  union of the four peers             543,157
+  largest peer                        OISD Big            240,418
+  union coverage                      98.9% of every rule any of the four peers carries
+  union contributions                 537,260 from us, 5,897 only they carry
+  biggest remaining gap               HaGeZi's Pro        4,533 of its rules are not in ours
+
+  Peer rules we do not carry, per peer (this is what a future source would have to close):
+    HaGeZi's Pro          4,533
+    OISD Big              3,378
+    AdRules DNS List      3,014
+    AdGuard DNS filter    2,114
+>>>>>>> Stashed changes
 
 ============================================================================
 protected-host check

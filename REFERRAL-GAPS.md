@@ -4,9 +4,15 @@
 
 Source allowlist: `allowlist-referral.txt` (HaGeZi's Allowlist Referral, AdGuard Home filter_45)
 
+<<<<<<< Updated upstream
 Against `dist/dns-shield.txt` (517,007 block rules) that allowlist
 releases **272 exact hostnames** across **249 registrable domains**,
 plus **13 wildcard rules** that each cover blocked names.
+=======
+Against `dist/dns-shield.txt` (537,260 block rules) that allowlist
+releases **277 exact hostnames** across **254 registrable domains**,
+plus **22 wildcard rules** that each cover blocked names.
+>>>>>>> Stashed changes
 
 AdGuard Home applies whitelist filters *over* blocklists, so while that filter is enabled
 these hostnames resolve normally instead of being blocked. The filter is off by default in
@@ -227,6 +233,10 @@ if you turn it on.
 
 - `acemlnb.com`
 
+### adcell.com (1)
+
+- `t.adcell.com`
+
 ### adfoc.us (1)
 
 - `adfoc.us`
@@ -234,6 +244,10 @@ if you turn it on.
 ### admd.ink (1)
 
 - `admd.ink`
+
+### admitad.com (1)
+
+- `ad.admitad.com`
 
 ### adrecord.com (1)
 
@@ -274,6 +288,10 @@ if you turn it on.
 ### adx.io (1)
 
 - `adx.io`
+
+### afi-b.com (1)
+
+- `t.afi-b.com`
 
 ### agkn.com (1)
 
@@ -463,10 +481,6 @@ if you turn it on.
 
 - `links.email.crunchbase.com`
 
-### crwdcntrl.net (1)
-
-- `bcp.crwdcntrl.net`
-
 ### dana.id (1)
 
 - `link.dana.id`
@@ -478,6 +492,10 @@ if you turn it on.
 ### darty.com (1)
 
 - `ch0p.darty.com`
+
+### digidip.net (1)
+
+- `dealabs.digidip.net`
 
 ### digitaladvisor.dk (1)
 
@@ -558,6 +576,10 @@ if you turn it on.
 ### getblue.io (1)
 
 - `clicktracker.getblue.io`
+
+### getdrip.com (1)
+
+- `tag.getdrip.com`
 
 ### go2cloud.org (1)
 
@@ -1047,6 +1069,10 @@ if you turn it on.
 
 - `cts.vresp.com`
 
+### webengage.com (1)
+
+- `c.webengage.com`
+
 ### webgains.com (1)
 
 - `track.webgains.com`
@@ -1081,14 +1107,23 @@ if you turn it on.
 - `@@||*tagm.tchibo.de^` covers 1 blocked name(s): `tagm.tchibo.de`
 - `@@||adservice.google.*^` covers 13 blocked name(s): `adservice.google.be`, `adservice.google.ca`, `adservice.google.cn`, `adservice.google.co.in`, `adservice.google.co.za`, `adservice.google.com`, ...
 - `@@||app*.outreach.io^` covers 3 blocked name(s): `app1e.kaiafrontdoor.outreach.io`, `app1e.oats.outreach.io`, `app1e.oneclick.outreach.io`
+- `@@||app*.salesmanago.pl^` covers 1 blocked name(s): `app2.salesmanago.pl`
+- `@@||app.*.adjust.com^` covers 1 blocked name(s): `app.us.adjust.com`
 - `@@||e*.customeriomail.com^` covers 1 blocked name(s): `e-eu.customeriomail.com`
+- `@@||edge*.customer.io^` covers 1 blocked name(s): `edge-west.customer.io`
 - `@@||ek*.voyage-prive.com^` covers 1 blocked name(s): `ek8.voyage-prive.com`
 - `@@||email-*.adtidy.info^` covers 1 blocked name(s): `email-link.adtidy.info`
 - `@@||email-*.adtidy.net^` covers 2 blocked name(s): `email-link.adtidy.net`, `email-open.adtidy.net`
 - `@@||email-*.adtidy.org^` covers 2 blocked name(s): `email-link.adtidy.org`, `email-open.adtidy.org`
 - `@@||klclick*.com^` covers 1 blocked name(s): `klclick1.com`
 - `@@||link.*.paramountplus.com^` covers 1 blocked name(s): `link.us.paramountplus.com`
+- `@@||links*.afterpay.com^` covers 2 blocked name(s): `links-anz.afterpay.com`, `links-na.afterpay.com`
+- `@@||links.mkt*.net^` covers 1 blocked name(s): `links.mkt51.net`
 - `@@||mkto-*.com^` covers 2 blocked name(s): `mkto-ab410147.com`, `mkto-test.com`
+- `@@||pixel*.everesttech.net^` covers 1 blocked name(s): `pixel.everesttech.net`
+- `@@||s*.exacttarget.com^` covers 2 blocked name(s): `sc2metrics.exacttarget.com`, `scmetrics.exacttarget.com`
+- `@@||t*.tradetracker.net^` covers 4 blocked name(s): `ti.tradetracker.net`, `tl.tradetracker.net`, `tm.tradetracker.net`, `ts.tradetracker.net`
+- `@@||track*.customer.io^` covers 3 blocked name(s): `track-eu.customer.io`, `track-sdk.customer.io`, `track.customer.io`
 - `@@||track*.effiliation.com^` covers 1 blocked name(s): `track.effiliation.com`
 
 ## How to keep a referral host working / 如何保留某个返利域名

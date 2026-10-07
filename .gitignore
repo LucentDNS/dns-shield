@@ -8,6 +8,14 @@
 dist/.compiled.raw
 dist/previous.txt
 dist/*.log
+# The per-feed snapshot: what each feed names when it is compiled on its own. Rebuilt automatically
+# whenever the feed set changes (it is cached under the list revision), so it is an intermediate,
+# not an artefact.
+dist/.perfeed.raw
+dist/.perfeed.revision
+# Ad-hoc shadow / coverage-gap measurements. Not artefacts either.
+dist/.shadow-*.txt
+dist/.allfour-open.txt
 
 # One-off diagnostic output from tools/diag-*.js, and the scratch files the live AdGuard Home
 # check writes (tools/agh-toggle.js, tools/agh-live-check.js).

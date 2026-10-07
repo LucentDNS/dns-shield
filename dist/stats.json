@@ -1,5 +1,6 @@
 {
   "name": "DNS Shield",
+<<<<<<< Updated upstream
   "generated": "2026-10-07T11:32:19.871Z",
   "file": "dns-shield.txt",
   "bytes": 11758689,
@@ -8,4 +9,14 @@
   "allowRules": 19,
   "feeds": 26,
   "sha256": "8c997e441206362b030b60879f0a6c5833054903c8f47965d627520318c957ec"
+=======
+  "generated": "2026-10-07T12:24:49.500Z",
+  "file": "dns-shield.txt",
+  "bytes": 12344395,
+  "mib": 11.77,
+  "blockRules": 537260,
+  "allowRules": 28,
+  "feeds": 26,
+  "sha256": "3ef631caa9e8f003fdbfc1d2feccd0ef3af9d5690d6b016aa996646866cb4415"
+>>>>>>> Stashed changes
 }
