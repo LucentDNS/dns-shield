@@ -39,7 +39,7 @@ which:
   every one.
 - **What this project adds is policy, not detection.** Three things the aggregate lists do not do
   for themselves:
-  - a **never-whitelist** (`data/never-whitelist.txt`, 95 protected domains) so a whitelist can
+  - a **never-whitelist** (`data/never-whitelist.txt`, 93 protected domains) so a whitelist can
     never quietly re-enable a tracker;
   - **infrastructure guards** (`data/guards.txt`, 135 shared CDN/hosting apexes) so one malicious
     tenant does not take a whole platform down with it;

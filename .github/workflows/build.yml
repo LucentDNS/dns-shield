@@ -149,6 +149,13 @@ jobs:
         # replays the one build commit on top of whatever landed meanwhile. If the concurrent
         # commit already published identical dist/ bytes, the rebase drops this commit entirely and
         # the push becomes a no-op - which is the desired outcome, not a lost update.
+        #
+        # That rebase can also conflict, and the conflict says nothing about the rules being wrong:
+        # two runs a few minutes apart both rewrite dist/dns-shield.txt, and git cannot merge two
+        # multi-megabyte generated files textually even though either version is a complete build.
+        # The loop below therefore treats a dist/-only conflict as "keep this run's freshly built
+        # artefacts" and retries. A conflict anywhere outside dist/ is a real one, so it fails the
+        # run instead of being resolved automatically and pushed as conflict markers.
         run: |
           git config user.name  'dns-shield-bot'
           git config user.email 'dns-shield-bot@users.noreply.github.com'
@@ -161,9 +168,53 @@ jobs:
           ALLOW=$(node -e "console.log(require('./dist/stats.json').allowRules)")
           SIZE=$(node -e "console.log(require('./dist/stats.json').mib)")
           git commit -m "build: ${BLOCK} block rules, ${ALLOW} exceptions, ${SIZE} MiB"
-          git -c rebase.autoStash=true pull --rebase --autostash origin "${GITHUB_REF_NAME}"
-          # Second attempt covers the narrow window between the rebase and the push.
-          git push || { sleep 5; git -c rebase.autoStash=true pull --rebase --autostash origin "${GITHUB_REF_NAME}"; git push; }
+
+          for attempt in 1 2 3; do
+            echo "publish attempt ${attempt}"
+            if git -c rebase.autoStash=true pull --rebase --autostash origin "${GITHUB_REF_NAME}"; then
+              # A push can still lose the race to a run that fetched at the same instant.
+              if git push; then
+                echo published
+                exit 0
+              fi
+              sleep 10
+              continue
+            fi
+
+            # The rebase stopped. Separate "it left no conflict behind" (a network or empty-rebase
+            # problem) from a real conflict, so that neither case is auto-resolved blindly.
+            UNMERGED=$(git diff --name-only --diff-filter=U || true)
+            if [ -z "$UNMERGED" ]; then
+              echo 'rebase did not complete and left no conflicts to resolve - retrying'
+              git rebase --abort || true
+              sleep 10
+              continue
+            fi
+            OUTSIDE=$(printf '%s\n' "$UNMERGED" | grep -v '^dist/' || true)
+            if [ -n "$OUTSIDE" ]; then
+              echo '::error::rebase conflict outside dist/ - refusing to auto-resolve'
+              printf '%s\n' "$UNMERGED"
+              git rebase --abort || true
+              exit 1
+            fi
+            # Every conflicted path is generated. In a rebase "theirs" is the commit being replayed
+            # - this run's build - while "ours" is what already landed upstream, so --theirs is the
+            # fresh artefact and the version the subscriber should end up with.
+            echo "keeping this run's build for: $(printf '%s ' $UNMERGED)"
+            git checkout --theirs -- dist
+            git add -A
+            GIT_EDITOR=true git rebase --continue || { git rebase --abort || true; exit 1; }
+            # The rebase just rewrote this run's build commit on top of what landed, so it is now
+            # directly pushable; only fall back to the next attempt if the push itself loses a race.
+            if git push; then
+              echo published
+              exit 0
+            fi
+            sleep 10
+          done
+
+          echo '::error::could not publish after 3 attempts'
+          exit 1
 
       - name: Report feed availability
         # Runs after Publish on purpose: a missing feed must never keep the previous list in place, and

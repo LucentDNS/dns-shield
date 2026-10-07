@@ -33,6 +33,14 @@ See `ARCHITECTURE.md` ("Reproducible output") for how both values are derived.
   "compiled minus releases" and reported the restored names as 20,275 unmodelled rules. It now reads
   `dist/.perfeed.raw` and runs the restored names through the same release tests the build does, so
   the derived set reconciles against the published file exactly again (`0 are defects`).
+- **Publishing survives two runs landing at once.** Two builds a minute apart both rewrite the same
+  generated files, so the `git pull --rebase` in `Publish` conflicted on `dist/dns-shield.txt` and
+  ended the run red with `exit code 1` even though the build was correct — this is what failed run
+  #9. The step now retries up to three times and, when every conflicted path is under `dist/`,
+  resolves it by keeping the artefacts this run just built (in a rebase, `--theirs` is the replayed
+  build); a conflict anywhere outside `dist/` still fails the run loudly rather than being resolved
+  automatically and pushed as conflict markers. Verified by replaying the step's exact script in a
+  scratch repository against both conflict shapes.
 - **Third-party attribution is now enforced.** `THIRD-PARTY-NOTICES.md` records who owns each feed,
   what it is licensed under, and the one feed whose licence (Creative Commons BY-NC 4.0) forbids
   commercial use. `tools/audit.js` fails the build when a feed is compiled in without a row there,

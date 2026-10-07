@@ -169,6 +169,17 @@ host as a side effect.
 Sorts both sections, asserts no domain appears in both, writes the file, and refuses to continue if
 the assertion fails.
 
+### Publishing
+`.github/workflows/build.yml` runs the pipeline on a schedule and commits the result, and three
+properties of that step are deliberate. `npm run verify` runs before `Publish`, because the moment a
+commit reaches `main` is the last moment a regression can be caught before a subscriber sees it. The
+job then rebases onto whatever landed while the feeds were downloading, since a scheduled run can
+start from a commit a human push supersedes. That rebase can conflict without anything being wrong:
+two runs minutes apart both rewrite `dist/dns-shield.txt`, and git cannot merge two multi-megabyte
+generated files textually even though either version is a complete build. The step therefore treats a
+conflict confined to `dist/` as "keep the artefacts this run built" and retries, while a conflict
+anywhere else fails the run rather than being auto-resolved and pushed as conflict markers.
+
 ## Verification
 
 Nothing is published without passing these. `npm run verify` runs them locally.
