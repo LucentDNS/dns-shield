@@ -5,8 +5,19 @@ malware and scam domains. It ships as one plain text file in AdGuard / DNS rule 
 `||domain^` block rules and `@@||domain^` exception rules, with no cosmetic rules, no scriptlets
 and no `$` modifiers. Because it contains nothing but domain rules, it is consumed by a DNS
 resolver rather than by a browser extension, and it works in AdGuard Home, AdGuard DNS, Pi-hole
-(after the usual hosts-format conversion), dnsmasq and blocky. The published file currently holds
-**516,987 block rules and 19 exception rules**, 11,758,131 bytes (11.21 MiB).
+(after the usual hosts-format conversion), dnsmasq and blocky.
+
+The published file is rebuilt every day, so its rule count moves by a few hundred either way. The
+current figures are always in the file's own header:
+
+```
+! Contains 516,987 block rules and 19 exception rules.
+! List revision: 6d37dc164e2d
+```
+
+The numbers quoted below come from the reference build of 2026-10-07: **516,987 block rules,
+19 exception rules, 11.21 MiB**. Treat them as a shape, not a promise — trust the header, or
+`dist/stats.json`, for today's exact count.
 
 ## Why this list
 
@@ -31,7 +42,8 @@ which:
     publishes in a shape that does not survive normalisation.
 - **It measures itself instead of asserting.** `tools/benchmark.js` puts this list and the four
   peers on one ruler, and `tools/audit.js` fails the build on a regression. The numbers from the
-  reference run (2026-10-07) are:
+  reference run (2026-10-07) are — and the peer counts below drift daily too, which is why they are
+  never quoted outside this dated table:
 
   | Peer | Their rules | Share we also block |
   | --- | --- | --- |
