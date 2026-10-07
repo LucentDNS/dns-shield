@@ -1,5 +1,10 @@
 # DNS Shield
 
+[![build](https://github.com/LucentDNS/dns-shield/actions/workflows/build.yml/badge.svg)](https://github.com/LucentDNS/dns-shield/actions/workflows/build.yml)
+[![规则条数](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FLucentDNS%2Fdns-shield%2Fmain%2Fdist%2Fstats.json&query=%24.blockRules&label=%E6%8B%A6%E6%88%AA%E8%A7%84%E5%88%99&color=blue)](https://github.com/LucentDNS/dns-shield/blob/main/dist/stats.json)
+[![许可证：GPL-3.0](https://img.shields.io/badge/%E8%AE%B8%E5%8F%AF%E8%AF%81-GPL--3.0-blue)](LICENSE)
+[![订阅源：目录 27，参与编译 26](https://img.shields.io/badge/%E8%AE%A2%E9%98%85%E6%BA%90-27%20%E7%9B%AE%E5%BD%95%EF%BC%8C26%20%E5%8F%82%E4%B8%8E%E7%BC%96%E8%AF%91-blue)](THIRD-PARTY-NOTICES.md)
+
 DNS Shield 是一份 DNS 层屏蔽列表，用于拦截广告、跟踪器、遥测上报、钓鱼、恶意软件与诈骗域名。
 它以单个纯文本文件发布，只使用 AdGuard / DNS 规则语法：`||domain^` 屏蔽规则与
 `@@||domain^` 例外规则，不含外观过滤规则（cosmetic rules）、脚本注入规则（scriptlet）和 `$`

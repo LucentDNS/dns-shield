@@ -1,5 +1,10 @@
 # DNS Shield
 
+[![build](https://github.com/LucentDNS/dns-shield/actions/workflows/build.yml/badge.svg)](https://github.com/LucentDNS/dns-shield/actions/workflows/build.yml)
+[![rules](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FLucentDNS%2Fdns-shield%2Fmain%2Fdist%2Fstats.json&query=%24.blockRules&label=block%20rules&color=blue)](https://github.com/LucentDNS/dns-shield/blob/main/dist/stats.json)
+[![licence: GPL-3.0](https://img.shields.io/badge/licence-GPL--3.0-blue)](LICENSE)
+[![feeds: 27 catalogue, 26 compiled](https://img.shields.io/badge/feeds-27%20catalogue%2C%2026%20compiled-blue)](THIRD-PARTY-NOTICES.md)
+
 DNS Shield is a DNS-level blocklist for advertisements, trackers, telemetry beacons, phishing,
 malware and scam domains. It ships as one plain text file in AdGuard / DNS rule syntax only:
 `||domain^` block rules and `@@||domain^` exception rules, with no cosmetic rules, no scriptlets
