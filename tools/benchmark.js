@@ -229,6 +229,8 @@ async function main() {
     head('false-positive ruler (AdGuard exceptions)');
     say('  Every host below is one AdGuard un-blocked after a real breakage report. A list that');
     say('  blocks it is blocking something a human already proved broken.');
+    say('  "by name" counts exact rules; "effectively" also counts a host caught by an ancestor');
+    say('  rule - which is how a platform-level block breaks a service nobody meant to block.');
     let rulerSet = new Set();
     try {
         const { text } = await fetchWithMirrors({ ...FP_RULER, id: 'adguard-exceptions' });
@@ -238,23 +240,41 @@ async function main() {
         say(`  ruler unavailable (${e.message}) - skipping the false-positive comparison`);
     }
     if (rulerSet.size) {
-        say('');
-        say(`  ${pad('list', 22)}${pad('blocks a proven-broken host', 30)}blocked hosts`);
-        const blockedBy = (set, allowSet) => {
-            const hits = [];
-            rulerSet.forEach((d) => {
-                if (!set.has(d)) return;
-                if (allowSet && allowSet.has(d)) return;
-                hits.push(d);
-            });
-            return hits;
+        // A `||domain^` rule blocks the whole subtree, so a ruler host can be blocked by a rule
+        // that never names it. Counting exact matches alone under-reports every list that blocks
+        // platforms instead of hosts - and it is precisely the inherited case that breaks a site,
+        // because nobody ever decided that this host was worth blocking.
+        const ancestorsOf = (d) => {
+            const parts = d.split('.');
+            const out = [];
+            for (let i = 1; i <= parts.length - 2; i += 1) out.push(parts.slice(i).join('.'));
+            return out;
         };
-        const oursHits = blockedBy(ours.block, ours.allow);
-        say(`  ${pad('DNS Shield (ours)', 22)}${pad(String(oursHits.length), 30)}${oursHits.slice(0, 6).join(', ')}`);
-        results.forEach((r) => {
-            const hits = blockedBy(r.p.block, r.p.allow);
-            say(`  ${pad(r.peer.name, 22)}${pad(String(hits.length), 30)}${hits.slice(0, 6).join(', ')}`);
+        const allowed = (allowSet, d) => Boolean(allowSet) && (allowSet.has(d) || ancestorsOf(d).some((a) => allowSet.has(a)));
+        const blockedBy = (set, allowSet) => {
+            const named = [];
+            const inherited = [];
+            rulerSet.forEach((d) => {
+                if (allowed(allowSet, d)) return;
+                if (set.has(d)) { named.push(d); return; }
+                const via = ancestorsOf(d).find((a) => set.has(a));
+                if (via) inherited.push(`${d} (via ${via})`);
+            });
+            return { named, inherited };
+        };
+        say('');
+        say(`  ${pad('list', 22)}${pad('by name', 12)}${pad('effectively', 13)}sample`);
+        const rows = [['DNS Shield (ours)', ours]].concat(results.map((r) => [r.peer.name, r.p]));
+        rows.forEach(([name, list]) => {
+            const { named, inherited } = blockedBy(list.block, list.allow);
+            say(`  ${pad(name, 22)}${pad(String(named.length), 12)}${pad(String(named.length + inherited.length), 13)}${[...named, ...inherited].slice(0, 2).join(', ')}`);
         });
+        const inheritedOnly = [...rulerSet].filter((d) => !ours.block.has(d) && !allowed(ours.allow, d) && ancestorsOf(d).some((a) => ours.block.has(a)));
+        if (inheritedOnly.length) {
+            say('');
+            say(`  ours: ${num(inheritedOnly.length)} of the effectively-blocked hosts are blocked only through an`);
+            say(`  ancestor rule - no rule of ours names them: ${inheritedOnly.slice(0, 4).join(', ')}`);
+        }
     }
 
     head('verdict');

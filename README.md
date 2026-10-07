@@ -72,11 +72,17 @@ which:
   against the published file exactly. Of the 1,763 rules that **all four** peers carry and we do
   not, 1,378 are `*.cloudfront.net` distributions sitting under a whole-tree whitelist entry kept
   on purpose - a policy tradeoff, documented rather than papered over.
-- **Over-blocking is measured too.** AdGuard's own 172 hand-written exceptions are used as an
-  independent ruler: each one is a host a human already proved broken. This list still blocks
-  **2** of them — `sax.sina.com.cn` and `log.mmstat.com`, both pinned deliberately in
-  `data/never-whitelist.txt` and `data/extra-block.txt` because they are telemetry endpoints. On
-  the same ruler AdGuard DNS filter blocks 23, AdRules DNS List 18, OISD Big 4 and HaGeZi's Pro 2.
+- **Over-blocking is measured too, in two columns.** AdGuard's own 172 hand-written exceptions are
+  used as an independent ruler: each one is a host a human already proved broken. Counting only
+  rules that name the host, this list blocks **4** of them — `sax.sina.com.cn`, `log.mmstat.com`,
+  `app.appsflyer.com` and `app.adjust.com`, all pinned deliberately in `data/never-whitelist.txt`
+  because they are the telemetry and attribution endpoints of the ad stack. On the same ruler
+  AdGuard DNS filter blocks 23 by name, AdRules DNS List 18, OISD Big 4 and HaGeZi's Pro 2. But a
+  `||domain^` rule blocks a whole subtree, and that is how a list breaks something nobody decided to
+  block: counting hosts caught by an ancestor rule as well, this list blocks **66**, against AdGuard
+  DNS filter 79, AdRules DNS List 67, OISD Big 15 and HaGeZi's Pro 19. Sixty-two of our 66 are
+  inherited from a platform rule that never names the host, and `tools/benchmark.js` prints both
+  figures for every list so neither can be quoted alone.
 
 The tradeoff is real and worth stating plainly: 537,260 rules is more than twice OISD Big's
 240,418, and the file is 11.77 MiB. That makes this list a poor fit for a memory-constrained

@@ -17,6 +17,14 @@ See `ARCHITECTURE.md` ("Reproducible output") for how both values are derived.
 
 ## Unreleased
 
+- **The false-positive ruler reports inherited blocks, not just named ones.** A `||domain^` rule blocks
+  a whole subtree, so a host can be blocked by a rule that never mentions it — which is exactly how a
+  list breaks a service nobody decided to block. `tools/benchmark.js` counted exact matches only,
+  under-reporting over-blocking for every list, and this list most of all because it blocks platforms
+  rather than hosts. Both figures are printed now: 4 of AdGuard's 172 confirmed-breakage hosts are
+  blocked by name and 66 effectively, 62 of them inherited from an ancestor rule — against AdGuard DNS
+  filter 23/79, AdRules DNS List 18/67, OISD Big 4/15 and HaGeZi's Pro 2/19. No blocking rule changed;
+  the measurement stopped flattering the list.
 - **Cached feed bodies expire, so the daily run cannot serve stale data.** `tools/fetch.js` used to
   reuse any cached body larger than 20 bytes, with no upper bound on its age. Because CI restores
   `.cache/sources` from the previous run every day, a scheduled build could keep rebuilding the same

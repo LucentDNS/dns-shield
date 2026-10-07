@@ -59,11 +59,15 @@ Pi-hole（需按惯例转换成 hosts 格式）、dnsmasq 和 blocky。
   在参考运行中四份列表全部报告 `0 are defects`，且推导出的规则集与发布文件完全对得上。
   四家**全部**收录而我们没有的 1,763 条中，有 1,378 条是位于整树白名单条目之下的
   `*.cloudfront.net` 分发域名——这是刻意保留的策略取舍，被记录下来而不是被掩盖。
-- **过度屏蔽同样被测量。** AdGuard 自己手写的 172 条例外规则被用作独立的尺子：每一条都对应一个
-  已被人证实被误伤的主机名。本列表仍然屏蔽其中 **2 条**——`sax.sina.com.cn` 和
-  `log.mmstat.com`，二者都是因为属于遥测端点而被刻意固定在 `data/never-whitelist.txt` 和
-  `data/extra-block.txt` 中的。在同一把尺子上，AdGuard DNS filter 屏蔽 23 条、AdRules DNS List
-  18 条、OISD Big 4 条、HaGeZi's Pro 2 条。
+- **过度屏蔽同样被测量，而且分两个口径。** AdGuard 自己手写的 172 条例外规则被用作独立的尺子：
+  每一条都对应一个已被人证实被误伤的主机名。只数"直接点名该主机"的规则，本列表屏蔽其中 **4 条**
+  ——`sax.sina.com.cn`、`log.mmstat.com`、`app.appsflyer.com`、`app.adjust.com`，它们都是因为属于
+  广告链路里的遥测与归因端点，被刻意固定在 `data/never-whitelist.txt` 中。在同一把尺子上，
+  AdGuard DNS filter 点名屏蔽 23 条、AdRules DNS List 18 条、OISD Big 4 条、HaGeZi's Pro 2 条。
+  但一条 `||domain^` 会屏蔽整棵子树，这正是列表误伤"没人打算屏蔽的东西"的方式：把被祖先规则连带
+  屏蔽的主机也算进去，本列表屏蔽 **66 条**，而 AdGuard DNS filter 79 条、AdRules DNS List 67 条、
+  OISD Big 15 条、HaGeZi's Pro 19 条。这 66 条里有 62 条来自一条从未点名该主机的平台规则。
+  `tools/benchmark.js` 会把两个口径都打印出来，避免只报对自己有利的那一个。
 
 代价是真实的，也值得直说：537,260 条规则是 OISD Big 的 240,418 条的两倍多，文件体积 11.77 MiB。
 因此它并不适合内存紧张的软路由，也不适合按流量计费的手机。`dist/audit.log` 里还长期带着一条警告：

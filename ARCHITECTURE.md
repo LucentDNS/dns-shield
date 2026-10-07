@@ -172,6 +172,12 @@ itself. Three filters apply before an exception is emitted:
   of them ad-network subtrees such as `pagead.l.doubleclick.net` and `app.adjust.com`.
 - An exception that names a domain no feed blocks is inert, and is counted but not emitted.
 
+This feed doubles as the ruler `tools/benchmark.js` measures every list against, and there the
+comparison is printed in two columns. Counting only rules that name a host flatters a list that
+blocks platforms: a `||domain^` rule blocks the whole subtree, so 62 of the 66 ruler hosts this
+build blocks are caught by an ancestor that never names them. The "effectively" column is the honest
+one for over-blocking, and it is the one to compare against peers.
+
 ### 6b. Whole-tree exceptions
 When an upstream exception names a host whose immediate parent is also blocked, releasing only the
 exact host leaves the application broken on the next subdomain it touches. The immediate parent is
