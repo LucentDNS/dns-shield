@@ -17,6 +17,8 @@
 const fs = require('fs');
 const path = require('path');
 
+const CATALOGUE = require('./sources.js');
+
 const ROOT = path.resolve(__dirname, '..');
 const OUT = (() => {
     const i = process.argv.indexOf('--out');
@@ -113,6 +115,23 @@ function main() {
     const raw = readOut(OUT);
     head(`audit  ${OUT}`);
     say(`bytes ${raw.length.toLocaleString()}  (${(raw.length / 1048576).toFixed(2)} MiB)`);
+
+    // Attribution is a build gate, not a habit. Every feed compiled into the published file has to
+    // be named, with its licence, in THIRD-PARTY-NOTICES.md - otherwise a feed can be added, ship in
+    // millions of resolved queries, and never be credited. The check is deliberately about presence,
+    // not about wording: it cannot tell you the licence is right, only that nobody forgot the row.
+    const noticesPath = path.join(ROOT, 'THIRD-PARTY-NOTICES.md');
+    if (!fs.existsSync(noticesPath)) {
+        fail('THIRD-PARTY-NOTICES.md is missing - no feed in the published file is attributed');
+    } else {
+        const notices = fs.readFileSync(noticesPath, 'utf8');
+        const unattributed = CATALOGUE.filter((s) => !notices.includes(`\`${s.id}\``)).map((s) => s.id);
+        if (unattributed.length) {
+            fail(`${unattributed.length} feed(s) are compiled in but not attributed in THIRD-PARTY-NOTICES.md: ${unattributed.join(', ')}`);
+        } else {
+            say(`  OK    all ${CATALOGUE.length} catalogue entries are attributed in THIRD-PARTY-NOTICES.md`);
+        }
+    }
 
     const lines = raw.split('\n');
     const blocked = new Set();

@@ -215,8 +215,9 @@ SDK；挖矿域名；钓鱼、恶意软件分发与诈骗域名；以及中国�
   `.cache/sources/<id>.txt` 中每行一个主机名。
 - `tools/build.js` — 构建流水线：编译屏蔽源，然后依次应用排除层、守卫层、白名单层、保护集层和
   例外层，最后输出列表与 `dist/build.log`。
-- `tools/audit.js` — 九项检查（语法、整洁性、必须屏蔽、必须可达、共享顶级域名、两用服务、白名单
-  影响、保护集、无效条目）；写出 `dist/audit.log`，任何一项失败都以非零状态退出。
+- `tools/audit.js` — 九个部分（语法、整洁性、必须屏蔽、必须可达、共享顶级域名、两用服务、白名单
+  影响、永不白名单保护集、无效白名单条目），另有一道署名闸门：某个订阅源被编入产物却没有登记在
+  `THIRD-PARTY-NOTICES.md` 里，构建即失败；写出 `dist/audit.log`，任何一项失败都以非零状态退出。
 - `tools/coverage-gap.js` — 解释本列表未收录的每一条同类规则，把它归入“符合预期”或“缺陷”，并让
   推导出的规则集与发布文件对账；存在缺陷时以非零状态退出。
 - `tools/benchmark.js` — 以四份同类列表和 AdGuard 例外尺子为基准，测量覆盖率与过度屏蔽；
@@ -244,6 +245,8 @@ SDK；挖矿域名；钓鱼、恶意软件分发与诈骗域名；以及中国�
 - `SECURITY.md` — 在一个"只有数据、没有可执行代码"的项目里，什么算安全问题，以及如何私下报告。
 - `CHANGELOG.md` — 工具链、策略文件与文档的变更。每日产物不记流水账：列表内部的
   `! List revision:` 就是它的身份标识。
+- `THIRD-PARTY-NOTICES.md` — 每个订阅源归谁所有、采用什么许可证，以及那一条禁止商业使用的源。
+  某个源没有登记在这里，`tools/audit.js` 会让构建失败。
 - `REFERRAL-GAPS.md` — 自动生成：一条白名单过滤器会从发布文件中释放哪些域名。
 - `dist/build.log`、`dist/audit.log`、`dist/benchmark.txt`、`dist/stats.json` — 参考构建产生的日志与
   统计摘要。
@@ -261,6 +264,7 @@ SDK；挖矿域名；钓鱼、恶意软件分发与诈骗域名；以及中国�
 | 跟那些流行清单比，它是什么水平？ | [`dist/benchmark.txt`](dist/benchmark.txt) |
 | 某个主机名坏了，该改哪里？ | [`CONTRIBUTING.md`](CONTRIBUTING.md) |
 | 什么算本项目的安全问题？ | [`SECURITY.md`](SECURITY.md) |
+| 每个订阅源归谁、什么许可证？ | [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md) |
 | 工具链改了什么？ | [`CHANGELOG.md`](CHANGELOG.md) |
 
 ## 自行构建

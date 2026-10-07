@@ -17,7 +17,15 @@ See `ARCHITECTURE.md` ("Reproducible output") for how both values are derived.
 
 ## Unreleased
 
-Nothing yet.
+- **Third-party attribution is now enforced.** `THIRD-PARTY-NOTICES.md` records who owns each feed,
+  what it is licensed under, and the one feed whose licence (Creative Commons BY-NC 4.0) forbids
+  commercial use. `tools/audit.js` fails the build when a feed is compiled in without a row there,
+  so attribution cannot be forgotten when a feed is added.
+- **The published file says so too.** Its header now states that GPL-3.0 covers the compilation and
+  that the upstream feeds carry their own licences, rather than leaving `! License: GPL-3.0` to be
+  read as a statement about everybody else's work.
+- **No credential defaults in the tools.** `tools/agh-toggle.js` and `tools/agh-live-check.js`
+  require `AGH_PASS` and exit 2 with instructions when it is unset.
 
 ## 2026-10-07 — first published list
 
@@ -34,7 +42,9 @@ stable; there are no tags yet.
 | `48195ef` | Scheduled rebuild output. |
 | `c6dc9df` | Give the list a reproducible identity (`! List revision:`), stop failing the build over feeds that are optional, and report feed availability without blocking publication. |
 | `5e57da1` | First successful scheduled rebuild: 516,971 block rules, 19 exception rules, 11.21 MiB. |
-| `d0e470b` | Compliance pass: no credential defaults in the tools, no stale numbers in the documentation, no `package-lock.json` committed by CI, plus `CONTRIBUTING.md` and `SECURITY.md`. |
+| `d0e470b` | Compliance pass: no stale numbers, no `package-lock.json` committed by CI, no credential defaults in the tools, plus the first `CONTRIBUTING.md` and `SECURITY.md`. |
+| `bffd268` | The rest of the compliance pass: source accounting corrected to 27 catalogue entries, community files wired into the README, `CHANGELOG.md` added. |
+| `9c88395`, `fe6a044` | Documentation stops quoting a rule count that changes every day. |
 
 Known, accepted properties of this first release are listed under "Known limitations" in
 `ARCHITECTURE.md` and under "Known and accepted risks" in `SECURITY.md`.

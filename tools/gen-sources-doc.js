@@ -675,6 +675,13 @@ function buildEn() {
         + 'counts of the');
     L.push('cached copies, not figures published by the upstream projects.');
     L.push('');
+    L.push('**Licences are tracked separately.** This document records what each feed contains and how '
+        + 'risky it is;');
+    L.push('it deliberately says nothing about who owns it or what it may be used for. That record '
+        + 'lives in');
+    L.push('[`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md), and `tools/audit.js` fails the build '
+        + 'if a feed is missing from it.');
+    L.push('');
     return L.join('\n');
 }
 
@@ -777,6 +784,10 @@ function buildZh() {
     L.push('`tools/sources.js` 读出来的。表里有两列不是目录字段，而是写在生成器里的编辑内容：');
     L.push('**格式** 和 **用途**。**风险说明** 一列是目录里自带的原文：本文档用 `riskZh`，');
     L.push('英文文档用 `risk`，两侧都未经改写。条目数取自本地缓存的副本行数，不是上游项目公布的数字。');
+    L.push('');
+    L.push('**许可证另有一处记录。** 本文档写的是每个源包含什么、风险如何，刻意不谈它归谁所有、');
+    L.push('可以怎么用。那部分记录在 [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md) 里；');
+    L.push('某个源没有登记在那里，`tools/audit.js` 会让构建失败。');
     L.push('');
     return L.join('\n');
 }

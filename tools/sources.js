@@ -110,8 +110,8 @@ module.exports = [
         urls: ['https://phishing.army/download/phishing_army_blocklist_extended.txt'],
         layer: 'security',
         refresh: 'several times daily',
-        risk: 'The extended variant includes apex entries; a handful of borderline legit registrations exist.',
-        riskZh: 'extended 变体包含顶级域名条目；有少量处在合法边界上的注册。',
+        risk: 'The extended variant includes apex entries; a handful of borderline legit registrations exist. Its licence is also the odd one out here: Creative Commons BY-NC 4.0, which forbids commercial use. That is a property of the feed, not of this list, but it is why THIRD-PARTY-NOTICES.md marks this row as a limitation rather than a clear grant.',
+        riskZh: 'extended 变体包含顶级域名条目；有少量处在合法边界上的注册。它的许可证也与其他源不同：Creative Commons BY-NC 4.0，禁止商业性使用。这是该 feed 自身的属性，不是本列表的，但正因如此 THIRD-PARTY-NOTICES.md 把这一行标为限制而非明确授权。',
     },
     {
         id: 'openphish',

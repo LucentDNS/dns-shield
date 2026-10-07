@@ -246,9 +246,10 @@ deleting a line from the protection set.
   every feed to one hostname per line in `.cache/sources/<id>.txt`.
 - `tools/build.js` — the pipeline: compile the blocking feeds, then apply the exclusion, guard,
   whitelist, never-whitelist and exception layers, then emit the list and `dist/build.log`.
-- `tools/audit.js` — nine checks (syntax, hygiene, must-block, must-stay-reachable, shared apexes,
-  dual-use, whitelist effect, protection set, inert entries); writes `dist/audit.log` and exits
-  non-zero on any failure.
+- `tools/audit.js` — nine sections (syntax, hygiene, must-block, must-stay-reachable, shared
+  apexes, dual-use, whitelist effect, never-whitelist protection, inert whitelist entries) plus an
+  attribution gate that fails when a feed is compiled in but not listed in
+  `THIRD-PARTY-NOTICES.md`; writes `dist/audit.log` and exits non-zero on any failure.
 - `tools/coverage-gap.js` — explains every peer rule this list does not carry, buckets each one as
   intended or as a bug, and reconciles the derived rule set against the published file; exits
   non-zero on a defect.
@@ -282,6 +283,8 @@ deleting a line from the protection set.
   privately.
 - `CHANGELOG.md` — changes to the toolchain, the policy files and the documentation. The daily
   product is not changelogged: `! List revision:` inside the list identifies it.
+- `THIRD-PARTY-NOTICES.md` — who owns each feed, what it is licensed under, and the one feed whose
+  licence forbids commercial use. `tools/audit.js` fails the build if a feed is missing from it.
 - `REFERRAL-GAPS.md` — generated: what an allowlist filter would release from the published file.
 - `dist/build.log`, `dist/audit.log`, `dist/benchmark.txt`, `dist/stats.json` — logs and summary
   from the reference build.
@@ -300,6 +303,7 @@ deleting a line from the protection set.
 | How does it compare with the popular lists? | [`dist/benchmark.txt`](dist/benchmark.txt) |
 | A hostname broke — where does the fix go? | [`CONTRIBUTING.md`](CONTRIBUTING.md) |
 | What counts as a security problem here? | [`SECURITY.md`](SECURITY.md) |
+| Who owns the feeds, and under what licence? | [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md) |
 | What changed in the toolchain? | [`CHANGELOG.md`](CHANGELOG.md) |
 
 ## Building it yourself

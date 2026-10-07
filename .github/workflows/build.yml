@@ -30,6 +30,7 @@ on:
       - 'tools/**'
       - 'data/**'
       - 'package.json'
+      - 'THIRD-PARTY-NOTICES.md'
       - '.github/workflows/build.yml'
 
 # One publishing run at a time; a queued run supersedes a waiting one.

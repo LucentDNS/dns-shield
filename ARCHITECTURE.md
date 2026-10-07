@@ -66,6 +66,26 @@ reports feed availability runs *after* Publish, so a missing feed never keeps th
 and only a `MISSING SOURCES:` line - which cannot happen, because the build already refused - fails
 the run. An optional feed that is down produces an `::notice::`, not an error.
 
+### Attribution (a gate, not a stage)
+
+Every feed in the catalogue is also a third party's work with its own licence, and the published file
+redistributes it. `THIRD-PARTY-NOTICES.md` is the record: feed id, upstream project, licence, and a
+pointer to where that licence is stated. `tools/audit.js` fails when a catalogue entry has no row
+there.
+
+The gate is about presence, not correctness - it cannot tell you a licence was read properly, only
+that nobody added a feed and forgot to attribute it. That is the failure this project is actually
+exposed to: feeds get added in a hurry while someone is looking at coverage numbers.
+
+Two consequences the build now carries:
+
+- The published header no longer leaves `! License: GPL-3.0` to be read as a claim about upstream
+  rules. It says the GPL covers the compilation, and points at the notices file for the rest.
+- One feed, `phishing-army`, is licensed CC BY-NC 4.0, which forbids commercial use. That is recorded
+  as a limitation rather than smoothed over, and removing it is a one-entry edit to
+  `tools/sources.js`. The tradeoff is deliberate: it is a large phishing feed, and a deployer who is
+  not selling anything loses nothing by keeping it.
+
 ### 2. Compile blocking rules
 Feeds are handed to `@adguard/hostlist-compiler` as *local file* sources, one per feed. This is the
 compiler's only job: normalise mixed hostname/hosts/URL/adblock shapes into a deduplicated set of

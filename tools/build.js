@@ -505,6 +505,8 @@ function main() {
         `! Built from ${singleTopicCount} single-topic upstream feeds, ${coverageCount} compiled`,
         `! coverage lists and ${policyCount} policy lists. The policy lists block nothing: they only`,
         `! withdraw rules that upstream confirmed as false positives.`,
+        `! The GPL-3.0 above covers this compilation. The upstream feeds carry their own`,
+        `! licences, which are listed with attribution in THIRD-PARTY-NOTICES.md.`,
         `! Contains ${blockSorted.length.toLocaleString()} block rules and ${allowSorted.length.toLocaleString()} exception rules.`,
         `! ${allowSorted.length} upstream-confirmed false positives are explicitly allowed.`,
         `!`,
