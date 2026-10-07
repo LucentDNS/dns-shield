@@ -4,8 +4,8 @@
 
 Source allowlist: `allowlist-referral.txt` (HaGeZi's Allowlist Referral, AdGuard Home filter_45)
 
-Against `dist/dns-shield.txt` (517,007 block rules) that allowlist
-releases **273 exact hostnames** across **250 registrable domains**,
+Against `dist/dns-shield.txt` (516,950 block rules) that allowlist
+releases **272 exact hostnames** across **249 registrable domains**,
 plus **13 wildcard rules** that each cover blocked names.
 
 AdGuard Home applies whitelist filters *over* blocklists, so while that filter is enabled
@@ -274,10 +274,6 @@ if you turn it on.
 ### adx.io (1)
 
 - `adx.io`
-
-### affapp.io (1)
-
-- `trk.affapp.io`
 
 ### agkn.com (1)
 
