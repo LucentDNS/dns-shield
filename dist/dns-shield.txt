@@ -11,13 +11,8 @@
 ! withdraw rules that upstream confirmed as false positives.
 ! The GPL-3.0 above covers this compilation. The upstream feeds carry their own
 ! licences, which are listed with attribution in THIRD-PARTY-NOTICES.md.
-<<<<<<< Updated upstream
-! Contains 517,007 block rules and 19 exception rules.
-! 19 upstream-confirmed false positives are explicitly allowed.
-=======
-! Contains 537,260 block rules and 28 exception rules.
+! Contains 537,281 block rules and 28 exception rules.
 ! 28 upstream-confirmed false positives are explicitly allowed.
->>>>>>> Stashed changes
 !
 ! Syntax: AdGuard / DNS-level rules only (||domain^ and @@||domain^). No cosmetic,
 ! scriptlet or modifier rules - safe for Pi-hole, AdGuard Home, AdGuard DNS, dnsmasq
@@ -162710,11 +162705,8 @@
 ||explorenep.com^
 ||exploreonlineresults.com^
 ||explorer-patcher.com^
-<<<<<<< Updated upstream
-||explorer.vg^
-=======
 ||explorer.docs.rollbar.com^
->>>>>>> Stashed changes
+||explorer.vg^
 ||explorerfutile.com^
 ||explorerms.ddns.net^
 ||explorerpatcher.net^
@@ -236904,11 +236896,7 @@
 ||joias.pistacheacessorios.com.br^
 ||join-chat-whatsap.ok.ygto.com^
 ||join-collab.land^
-<<<<<<< Updated upstream
-=======
-||join-google-meet.com^
 ||join-groub-whatsapp34.25u.com^
->>>>>>> Stashed changes
 ||join-guild.vercel.app^
 ||join-otherside.com^
 ||join-partner.com^
@@ -469649,6 +469637,7 @@
 ||tp.your-look-for-less.nl^
 ||tp.your-look-for-less.se^
 ||tp1jcgl644jk.com^
+||tp2.5ee.mytemp.website^
 ||tp4d21qek.com^
 ||tp550.com^
 ||tp5673.com^
@@ -516963,12 +516952,8 @@
 ||www.hunt-leads.com^
 ||www.hunter-details.com^
 ||www.hunterspeed.com^
-<<<<<<< Updated upstream
-=======
 ||www.hvgcfx1.com^
-||www.hwgeneralins.com^
 ||www.hxcav77.com^
->>>>>>> Stashed changes
 ||www.hyfyuan.com^
 ||www.hypeprop.com^
 ||www.hypetrust.com^

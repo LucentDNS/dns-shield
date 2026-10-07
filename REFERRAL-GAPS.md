@@ -4,15 +4,9 @@
 
 Source allowlist: `allowlist-referral.txt` (HaGeZi's Allowlist Referral, AdGuard Home filter_45)
 
-<<<<<<< Updated upstream
-Against `dist/dns-shield.txt` (517,007 block rules) that allowlist
-releases **272 exact hostnames** across **249 registrable domains**,
-plus **13 wildcard rules** that each cover blocked names.
-=======
-Against `dist/dns-shield.txt` (537,260 block rules) that allowlist
+Against `dist/dns-shield.txt` (537,281 block rules) that allowlist
 releases **277 exact hostnames** across **254 registrable domains**,
 plus **22 wildcard rules** that each cover blocked names.
->>>>>>> Stashed changes
 
 AdGuard Home applies whitelist filters *over* blocklists, so while that filter is enabled
 these hostnames resolve normally instead of being blocked. The filter is off by default in
