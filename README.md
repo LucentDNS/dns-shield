@@ -77,6 +77,27 @@ https://raw.githubusercontent.com/LucentDNS/dns-shield/main/dist/dns-shield.txt
 3. Name it `DNS Shield`, paste the URL above into the list URL field, and save.
 4. AdGuard Home refreshes it on the schedule you configured for blocklists.
 
+### How the list keeps itself current
+
+The subscription URL never changes. The file behind it is rebuilt by the workflow in
+`.github/workflows/build.yml`, which runs **daily at 03:17 UTC** (11:17 Beijing time) — deliberately
+off the hour, because GitHub's scheduled runners are congested at `:00` and a delayed start is the
+most common reason a scheduled job is skipped. You can also start a run by hand from the **Actions**
+tab (Run workflow), optionally forcing a full re-download of every feed.
+
+A run that finds no change publishes nothing: the last step compares the rebuilt file and only
+commits when it actually differs. Two more properties matter if you are relying on it:
+
+- **It never publishes an unverified list.** Audit, coverage reconciliation and a regression budget
+  all run before the commit step and exit non-zero on a regression, so a broken build leaves
+  yesterday's file in place rather than pushing something worse to your resolver.
+- **The timestamp is reproducible.** `! Last modified:` is derived from the newest feed file, not
+  from the clock, so `dist/stats.json` hashes the bytes you actually downloaded.
+
+GitHub disables scheduled workflows in a repository that has seen no activity for 60 days; the daily
+commit is itself activity, so this only becomes relevant if the upstream feeds all go quiet for two
+months.
+
 ### Check your allowlists before you trust it
 
 AdGuard Home applies **whitelist filters over blocklists**. An `@@` rule in any allowlist you have

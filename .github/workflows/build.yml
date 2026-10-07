@@ -4,6 +4,12 @@
 # exit non-zero when the product regresses, and they run before the commit step. A failing run
 # leaves the previously published file in place, so subscribers keep the last known-good list
 # instead of receiving a broken one.
+#
+# Why this is ordinary, permitted use of GitHub Actions rather than abuse: one short job a day on a
+# public repository, running on standard GitHub-hosted runners well inside the free allowance, with
+# a hard 45-minute timeout and a single-run concurrency group so it can never pile up. It downloads
+# public domain lists, rebuilds a text file, and commits it back to the same repository. There is no
+# commercial resale, no proxying or mining, no attempt to evade rate limits, and no private data.
 name: build
 
 on:
