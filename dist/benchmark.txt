@@ -1,4 +1,4 @@
-benchmark  runnervm8df0l  2026-10-07T13:19:30.440Z
+benchmark  runnervm8df0l  2026-10-07T13:29:51.060Z
 
 ============================================================================
 our list
@@ -24,14 +24,19 @@ false-positive ruler (AdGuard exceptions)
 ============================================================================
   Every host below is one AdGuard un-blocked after a real breakage report. A list that
   blocks it is blocking something a human already proved broken.
+  "by name" counts exact rules; "effectively" also counts a host caught by an ancestor
+  rule - which is how a platform-level block breaks a service nobody meant to block.
   ruler entries: 172
 
-  list                  blocks a proven-broken host   blocked hosts
-  DNS Shield (ours)     4                             sax.sina.com.cn, app.appsflyer.com, log.mmstat.com, app.adjust.com
-  AdGuard DNS filter    23                            swasc.homedepot.com, data.promo.timhortons.ca, data.notify.macys.com, om-ssl.consorsbank.de, belgium.wolterskluwer.com, sedge.nfl.com
-  HaGeZi's Pro          2                             r.sascdn.com, proto2ad.durasite.net
-  OISD Big              4                             sax.sina.com.cn, proto2ad.durasite.net, tags.crwdcntrl.net, str.hit.gemius.pl
-  AdRules DNS List      18                            swasc.homedepot.com, cmp.osano.com, data.promo.timhortons.ca, data.notify.macys.com, om-ssl.consorsbank.de, belgium.wolterskluwer.com
+  list                  by name     effectively  sample
+  DNS Shield (ours)     4           66           sax.sina.com.cn, app.appsflyer.com
+  AdGuard DNS filter    23          79           swasc.homedepot.com, data.promo.timhortons.ca
+  HaGeZi's Pro          2           19           r.sascdn.com, proto2ad.durasite.net
+  OISD Big              4           15           sax.sina.com.cn, proto2ad.durasite.net
+  AdRules DNS List      18          67           swasc.homedepot.com, cmp.osano.com
+
+  ours: 62 of the effectively-blocked hosts are blocked only through an
+  ancestor rule - no rule of ours names them: unsubscribe.lhinsights.com, ssai.aniview.com, content.viralize.tv, itoya.ec-optimizer.com
 
 ============================================================================
 verdict
