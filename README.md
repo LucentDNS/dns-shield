@@ -17,9 +17,10 @@ which:
 - **Coverage comes from upstream.** Four well-maintained aggregate lists are used as a coverage
   layer — OISD Big, HaGeZi's Pro, AdRules DNS List and AdGuard DNS filter — alongside twenty
   single-topic feeds for abuse/phishing, ad and tracking servers, and China-specific telemetry
-  SDKs. Twenty-four blocking feeds in total, plus two AdGuard policy feeds (their exclusions and
-  their human-confirmed false positives). Each feed keeps its own licence and its own maintainers;
-  `tools/sources.js` records the origin, refresh cadence and risk note of every one.
+  SDKs: twenty-four blocking feeds in total, plus two AdGuard policy feeds (their exclusions and
+  their human-confirmed false positives), so 26 feeds feed the build. Each feed keeps its own licence
+  and its own maintainers; `tools/sources.js` records the origin, refresh cadence and risk note of
+  every one.
 - **What this project adds is policy, not detection.** Three things the aggregate lists do not do
   for themselves:
   - a **never-whitelist** (`data/never-whitelist.txt`, 93 protected domains) so a whitelist can
@@ -225,8 +226,10 @@ deleting a line from the protection set.
 - `package.json` — npm scripts (`fetch`, `build`, `audit`, `gap`, `benchmark`, `stats`, `sources`,
   `pipeline`, `verify`, `referral-gaps`, `whitelist-impact`, plus `live` / `clean:live` for the live
   resolver check) and the `@adguard/hostlist-compiler` devDependency; requires Node.js `>= 20`.
-- `tools/sources.js` — the source catalogue: 26 entries, being 24 blocking feeds plus the two
-  AdGuard policy feeds, each with its URL order, refresh cadence and risk note.
+- `tools/sources.js` — the source catalogue: 27 entries, being 24 blocking feeds (twenty
+  single-topic feeds plus the four compiled coverage lists), two AdGuard policy feeds, and one
+  reference-only allowlist that is fetched but never compiled in. Each carries its URL order,
+  refresh cadence and risk note in English and Chinese.
 - `tools/fetch.js` — downloads the catalogue with per-source retries and mirrors, and normalises
   every feed to one hostname per line in `.cache/sources/<id>.txt`.
 - `tools/build.js` — the pipeline: compile the blocking feeds, then apply the exclusion, guard,
@@ -261,12 +264,31 @@ deleting a line from the protection set.
   `invalid`, `onion` and the reverse-DNS zones) applied before the whitelist stage.
 - `data/extra-block.txt` — the curated patch file, 3 rules.
 - `dist/dns-shield.txt` — the published product: 516,987 block rules, 19 exception rules, 11.21 MiB.
+- `CONTRIBUTING.md` — how to report a false positive (the most useful report there is) and which
+  `data/` file a given host belongs in.
+- `SECURITY.md` — what counts as a security problem in a data-only project, and how to report one
+  privately.
+- `CHANGELOG.md` — changes to the toolchain, the policy files and the documentation. The daily
+  product is not changelogged: `! List revision:` inside the list identifies it.
 - `REFERRAL-GAPS.md` — generated: what an allowlist filter would release from the published file.
 - `dist/build.log`, `dist/audit.log`, `dist/benchmark.txt`, `dist/stats.json` — logs and summary
   from the reference build.
 - `dist/.compiled.raw` — the compiler's intermediate output, reused by `--no-compile`.
-- `.cache/sources/` — the 26 cached feeds, one hostname per line; all network input lands here and
+- `.cache/sources/` — the 27 cached feeds, one hostname per line; all network input lands here and
   nothing else does.
+
+### Where to read what
+
+| Question | Document |
+| --- | --- |
+| How do I install it, and how do I check it? | this file |
+| How is it built, layer by layer? | [`ARCHITECTURE.md`](ARCHITECTURE.md) |
+| Which feeds, and what is risky about each? | [`SOURCES.md`](SOURCES.md) (Chinese: [`SOURCES.zh-CN.md`](SOURCES.zh-CN.md)) |
+| What would an allowlist filter release from it? | [`REFERRAL-GAPS.md`](REFERRAL-GAPS.md) |
+| How does it compare with the popular lists? | [`dist/benchmark.txt`](dist/benchmark.txt) |
+| A hostname broke — where does the fix go? | [`CONTRIBUTING.md`](CONTRIBUTING.md) |
+| What counts as a security problem here? | [`SECURITY.md`](SECURITY.md) |
+| What changed in the toolchain? | [`CHANGELOG.md`](CHANGELOG.md) |
 
 ## Building it yourself
 

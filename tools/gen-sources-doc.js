@@ -550,16 +550,15 @@ function buildEn() {
         + 'The Chinese');
     L.push('edition is [`SOURCES.zh-CN.md`](SOURCES.zh-CN.md).');
     L.push('');
-    L.push(`Layers in the catalogue: **${LAYERS.length}**. Catalogue entries: **${required}** - `
-        + `**${blocking} blocking feed entries**`);
-    L.push(`(security, ads and trackers, China telemetry, and the four compiled coverage lists), plus `
-        + `**${policy} policy entries**`);
-    L.push('(upstream exclusions and upstream exceptions). The policy entries are not blocking feeds; they are');
-    L.push('applied as set arithmetic after the blocking layers are compiled.');
+    L.push(`Layers in the catalogue: **${LAYERS.length}**. Catalogue entries: **${total}** - the `
+        + `**${required} that feed the build**`);
+    L.push(`being **${blocking} blocking feed entries** plus **${policy} policy entries**`);
+    L.push('(upstream exclusions and upstream exceptions), and **'
+        + `${reference} reference-only entry** that is fetched but never compiled in. The policy entries are`);
+    L.push('not blocking feeds; they are applied as set arithmetic after the blocking layers are compiled. The');
+    L.push('blocking count is twenty single-topic feeds plus the four compiled coverage lists.');
     L.push('');
-    L.push(`Catalogue entries above are the ${required} that feed the build. One further entry is fetched but `
-        + `not compiled in`);
-    L.push(`(\`allowlist-referral\`, ${reference} entry): it exists only so the referral report can be rebuilt. `
+    L.push(`The reference-only entry (\`allowlist-referral\`) exists only so the referral report can be rebuilt. `
         + 'It is counted');
     L.push('nowhere else and never reaches the published list.');
     L.push('');
@@ -695,13 +694,14 @@ function buildZh() {
     L.push('要增删或修改某个 feed，改目录文件即可，目录是唯一的权威清单。英文版见 '
         + '[`SOURCES.md`](SOURCES.md)。');
     L.push('');
-    L.push(`目录中的层数：**${LAYERS.length}**。参与构建的目录条目总数：**${required}**，其中 **${blocking} 条为拦截 feed 条目**`);
-    L.push(`（安全、广告与追踪器、中国区遥测，以及四份已编译的聚合覆盖清单），另有 **${policy} 条策略条目**`);
-    L.push('（上游排除清单与上游例外清单）。策略条目不参与拦截，它们是在拦截层编译完成之后，');
-    L.push('以集合运算的方式施加的。');
+    L.push(`目录中的层数：**${LAYERS.length}**。目录条目总数：**${total}**，即参与构建的 **${required} 条**`);
+    L.push(`（其中 **${blocking} 条为拦截 feed 条目**，另有 **${policy} 条策略条目**）`);
+    L.push(`以及 **${reference} 条仅供参照的条目**（只抓取、绝不参与编译）。`);
+    L.push('策略条目不参与拦截，它们是在拦截层编译完成之后，以集合运算的方式施加的。');
+    L.push('拦截 feed 条目由二十个单一主题订阅源加四份已编译的聚合覆盖清单构成。');
     L.push('');
-    L.push(`另有一条（\`allowlist-referral\`，共 ${reference} 条）会被抓取但不参与编译：它存在的唯一目的是`);
-    L.push('让返利报告能在任何机器上重新生成。它不计入任何其他地方，也永远不会进入发布产物。');
+    L.push(`仅供参照的那一条（\`allowlist-referral\`）存在的唯一目的是让返利报告能在任何机器上重新生成；`);
+    L.push('它不计入任何其他地方，也永远不会进入发布产物。');
     L.push('');
     L.push('| 层 | 条目数 | 作用 |');
     L.push('| --- | --- | --- |');

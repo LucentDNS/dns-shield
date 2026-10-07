@@ -292,8 +292,10 @@ allow) or the byte count (11,758,131).
   not coverage.
 - **Verification is one machine.** The list has been exercised on a single Windows host running
   AdGuard Home. Router, Pi-hole and mobile behaviour is reasoned about, not tested.
-- **No feedback channel yet.** The exception layer imports AdGuard's user-reported fixes because
-  this project has no issue tracker of its own in the loop.
+- **Feedback is thinner than upstream's.** The exception layer imports AdGuard's user-reported fixes,
+  because they have years of accumulated breakage reports and this project does not. Issues are open
+  on the repository, and `CONTRIBUTING.md` asks for the one report that actually improves a list -
+  the host that broke and the rule that fired.
 
 ## Adding or changing policy
 

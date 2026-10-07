@@ -14,8 +14,8 @@ Pi-hole（需按惯例转换成 hosts 格式）、dnsmasq 和 blocky。当前发
 
 - **覆盖范围来自上游。** 四份维护良好的聚合列表充当覆盖层——OISD Big、HaGeZi's Pro、
   AdRules DNS List 和 AdGuard DNS filter——另外还有二十个单一主题的原始订阅源，覆盖滥用与钓鱼、
-  广告与跟踪服务器、以及中国大陆特有的遥测 SDK。屏蔽类订阅源共 24 个，另有 AdGuard 的两份策略源
-  （其排除列表与人工确认的误报列表）。每个上游源都保留自己的许可证和维护者；
+  广告与跟踪服务器、以及中国大陆特有的遥测 SDK：屏蔽类订阅源共 24 个，另有 AdGuard 的两份策略源
+  （其排除列表与人工确认的误报列表），合计 26 个订阅源参与构建。每个上游源都保留自己的许可证和维护者；
   `tools/sources.js` 记录了每一个来源的出处、更新频率和风险说明。
 - **本项目补充的是策略，而不是检测能力。** 聚合列表自己不会做的三件事：
   - **禁止白名单**（`data/never-whitelist.txt`，93 个受保护域名），让白名单永远无法悄悄重新放行
@@ -198,8 +198,9 @@ SDK；挖矿域名；钓鱼、恶意软件分发与诈骗域名；以及中国�
 - `package.json` — npm 脚本（`fetch`、`build`、`audit`、`gap`、`benchmark`、`stats`、`sources`、
   `pipeline`、`verify`、`referral-gaps`、`whitelist-impact`，以及用于实机验证的 `live` /
   `clean:live`）与 `@adguard/hostlist-compiler` 开发依赖；要求 Node.js `>= 20`。
-- `tools/sources.js` — 订阅源目录：共 26 项，即 24 个屏蔽类订阅源加上 AdGuard 的两份策略源，
-  每项都记录了 URL 顺序、更新频率和风险说明。
+- `tools/sources.js` — 订阅源目录：共 27 项，即 24 个屏蔽类订阅源（二十个单一主题源加四份聚合覆盖
+  清单）、AdGuard 的两份策略源，以及一个仅供参照、只抓取绝不参与编译的白名单源。每项都记录了
+  URL 顺序、更新频率，以及中英双语的风险说明。
 - `tools/fetch.js` — 带逐源重试与镜像地下载目录中的订阅源，并把每个订阅源规范化为
   `.cache/sources/<id>.txt` 中每行一个主机名。
 - `tools/build.js` — 构建流水线：编译屏蔽源，然后依次应用排除层、守卫层、白名单层、保护集层和
@@ -229,11 +230,28 @@ SDK；挖矿域名；钓鱼、恶意软件分发与诈骗域名；以及中国�
   反向解析域），在白名单阶段之前生效。
 - `data/extra-block.txt` — 人工补丁文件，3 条规则。
 - `dist/dns-shield.txt` — 发布产物：516,987 条屏蔽规则、19 条例外规则、11.21 MiB。
+- `CONTRIBUTING.md` — 误杀怎么报（最有价值的一类反馈），某个主机名该写进哪个 `data/` 文件。
+- `SECURITY.md` — 在一个"只有数据、没有可执行代码"的项目里，什么算安全问题，以及如何私下报告。
+- `CHANGELOG.md` — 工具链、策略文件与文档的变更。每日产物不记流水账：列表内部的
+  `! List revision:` 就是它的身份标识。
 - `REFERRAL-GAPS.md` — 自动生成：一条白名单过滤器会从发布文件中释放哪些域名。
 - `dist/build.log`、`dist/audit.log`、`dist/benchmark.txt`、`dist/stats.json` — 参考构建产生的日志与
   统计摘要。
 - `dist/.compiled.raw` — 编译器的中间输出，供 `--no-compile` 复用。
-- `.cache/sources/` — 26 个已缓存的订阅源，每行一个主机名；所有网络输入只落在这里。
+- `.cache/sources/` — 27 个已缓存的订阅源，每行一个主机名；所有网络输入只落在这里。
+
+### 想查什么，看哪份文档
+
+| 问题 | 文档 |
+| --- | --- |
+| 怎么安装、怎么自查？ | 本文件 |
+| 它是怎么一层层编译出来的？ | [`ARCHITECTURE.md`](ARCHITECTURE.md) |
+| 用了哪些订阅源，每一份的风险是什么？ | [`SOURCES.zh-CN.md`](SOURCES.zh-CN.md)（英文：[`SOURCES.md`](SOURCES.md)） |
+| 装上一条白名单过滤器会释放掉什么？ | [`REFERRAL-GAPS.md`](REFERRAL-GAPS.md) |
+| 跟那些流行清单比，它是什么水平？ | [`dist/benchmark.txt`](dist/benchmark.txt) |
+| 某个主机名坏了，该改哪里？ | [`CONTRIBUTING.md`](CONTRIBUTING.md) |
+| 什么算本项目的安全问题？ | [`SECURITY.md`](SECURITY.md) |
+| 工具链改了什么？ | [`CHANGELOG.md`](CHANGELOG.md) |
 
 ## 自行构建
 
