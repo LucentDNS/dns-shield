@@ -109,9 +109,22 @@ commits when it actually differs. Two more properties matter if you are relying 
 - **It never publishes an unverified list.** Audit, coverage reconciliation and a regression budget
   all run before the commit step and exit non-zero on a regression, so a broken build leaves
   yesterday's file in place rather than pushing something worse to your resolver.
+- **The gates also run on the push that could break them.** Any commit touching `tools/`, `data/`,
+  `package.json`, `LICENSE`, `THIRD-PARTY-NOTICES.md` or the workflow itself runs `npm run verify`
+  again, so a change that breaks attribution, coverage or the rule syntax fails its own run instead
+  of being discovered by the next morning's build — by which time it is live.
 - **The header is reproducible.** A `! List revision:` digest over the feed bodies, plus a
   `! Last modified:` derived from upstream headers rather than the clock, means `dist/stats.json`
   hashes the bytes you actually downloaded - not the moment they were rebuilt.
+
+Everything that decides what the list looks like is in the repository and reviewable in a diff:
+[`ARCHITECTURE.md`](ARCHITECTURE.md) for the stages, [`SOURCES.md`](SOURCES.md) for the feeds and what
+is risky about each, [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md) for who owns them.
+
+The one thing that cannot live in a diff is the About box on the repository page. If you are
+maintaining a copy, `node tools/github-metadata.js` prints what it would set and `--apply` writes it,
+using a token you supply through `GITHUB_TOKEN`; it also turns off the wiki, because a second copy of
+the documentation is a copy that stops matching the data.
 
 GitHub disables scheduled workflows in a repository that has seen no activity for 60 days; the daily
 commit is itself activity, so this only becomes relevant if the upstream feeds all go quiet for two
@@ -273,6 +286,9 @@ deleting a line from the protection set.
   any list, so it works against a foreign allowlist before you install it.
 - `tools/referral-gaps.js` — writes `REFERRAL-GAPS.md`, the annotated version of the same question
   for HaGeZi's Allowlist Referral specifically; `--check` verifies the document is current.
+- `tools/github-metadata.js` — the About box, which GitHub stores rather than the repository does:
+  description, homepage, topics, and the wiki/discussions switches. Dry run by default; the only tool
+  here that touches repository settings and therefore the only one CI does not run.
 - `data/whitelist.txt` — the private whitelist, 69 exact and 286 whole-tree entries in the
   reference build.
 - `data/never-whitelist.txt` — the protection set, 93 domains that no whitelist may release.

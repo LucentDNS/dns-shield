@@ -29,6 +29,12 @@ See `ARCHITECTURE.md` ("Reproducible output") for how both values are derived.
 - **A push can no longer skip the gate.** The workflow runs `npm run verify` on any push to a path
   that can change a verdict, so an edit that breaks attribution, coverage or the syntax rules fails
   the run that carries it rather than the next morning's scheduled build.
+- **`tools/github-metadata.js`** prints, and with `--apply` writes, the About box every repository has
+  and this one had left empty: description, homepage and topics, plus the two settings that are not
+  About-box text - the wiki off, because documentation has to be reviewable in the same diff as the
+  data it describes, and discussions off, because the issue templates are where a report gets asked
+  the right questions. It is deliberately not part of CI: it changes repository settings, so it needs
+  a token a workflow should not hold.
 - **Reports now have somewhere to go.** Issue forms for a false positive and a missed block, both
   asking for the host and the rule that fired; `CODE_OF_CONDUCT.md`; a monthly grouped Dependabot
   update for the workflows' own actions; and a pull request template that states the two rules that

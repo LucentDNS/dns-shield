@@ -93,9 +93,21 @@ https://raw.githubusercontent.com/LucentDNS/dns-shield/main/dist/dns-shield.txt
 
 - **它绝不会发布未经校验的列表。** 审计、覆盖率对账、回归预算都在提交步骤之前运行，一旦回归就以
   非零码退出，因此构建失败只会让昨天的文件继续留在这里，而不会把你的解析器换成一个更糟的版本。
+- **闸门也会在可能破坏它的那次推送里跑。** 任何改动 `tools/`、`data/`、`package.json`、`LICENSE`、
+  `THIRD-PARTY-NOTICES.md` 或工作流自身的提交，都会再跑一次 `npm run verify`。这样，破坏了署名、
+  覆盖率或规则语法的改动会在它自己的那次运行里失败，而不是等到第二天早上的定时构建才发现——那时
+  它已经上线了。
 - **文件头部是可复现的。** `! List revision:` 是所有源文件正文的摘要，`! Last modified:` 取自上游
   `Last-Modified` 而不是当前时钟，所以 `dist/stats.json` 里的哈希对应的就是你实际下载到的那份字节，
   而不是它被重新构建的时刻。
+
+决定这份列表长什么样的一切都在仓库里，并且能在 diff 中逐行审查：[`ARCHITECTURE.md`](ARCHITECTURE.md)
+讲了各个阶段，[`SOURCES.md`](SOURCES.md) 讲了每个源以及各自的风险，
+[`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md) 讲了它们归谁所有。
+
+唯一没法放进 diff 的是仓库页面上那个 About 栏。如果你在维护自己的副本，可以运行
+`node tools/github-metadata.js` 看它会写入什么，加 `--apply` 真正写入（令牌通过 `GITHUB_TOKEN`
+提供）；它同时会关掉 wiki——因为文档的第二份副本，就是一份迟早会和数据对不上的副本。
 
 GitHub 会停用「连续 60 天无任何活动」的仓库里的定时工作流；每日提交本身就是活动，所以只有当上游所有
 源整整两个月都没动静时这条才会生效。
@@ -239,6 +251,8 @@ SDK；挖矿域名；钓鱼、恶意软件分发与诈骗域名；以及中国�
   因此失去保护。白名单文件与列表文件都可指定，因此可以在安装某条外部白名单**之前**先评估它。
 - `tools/referral-gaps.js` — 针对 HaGeZi's Allowlist Referral 生成带注释的 `REFERRAL-GAPS.md`；
   加 `--check` 只校验文档是否最新，不写文件。
+- `tools/github-metadata.js` — 那个由 GitHub 而非仓库保存的 About 栏：描述、主页、topics，以及
+  wiki/discussions 两个开关。默认只做预演；它是唯一会改动仓库设置的工具，因此也是唯一不由 CI 运行的。
 - `data/whitelist.txt` — 私有白名单，参考构建中为 69 条精确条目和 286 条整树条目。
 - `data/never-whitelist.txt` — 保护集，93 个任何白名单都不得放行的域名。
 - `data/guards.txt` — 135 个共享基础设施顶级域名；只放行顶级域名本身，子域名不放行。

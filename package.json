@@ -23,6 +23,7 @@
     "clean:live": "node tools/cleanup-live-check.js",
     "referral-gaps": "node tools/referral-gaps.js",
     "whitelist-impact": "node tools/whitelist-impact.js",
+    "github-metadata": "node tools/github-metadata.js",
     "pipeline": "node tools/fetch.js && node tools/build.js && node tools/audit.js && node tools/coverage-gap.js && node tools/benchmark.js && node tools/gen-sources-doc.js && node tools/write-stats.js && node tools/referral-gaps.js",
     "verify": "node tools/audit.js && node tools/coverage-gap.js && node tools/benchmark.js && node tools/referral-gaps.js --check"
   },
