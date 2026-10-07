@@ -4,7 +4,7 @@
 
 Source allowlist: `allowlist-referral.txt` (HaGeZi's Allowlist Referral, AdGuard Home filter_45)
 
-Against `dist/dns-shield.txt` (537,281 block rules) that allowlist
+Against `dist/dns-shield.txt` (537,643 block rules) that allowlist
 releases **277 exact hostnames** across **254 registrable domains**,
 plus **22 wildcard rules** that each cover blocked names.
 
