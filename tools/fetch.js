@@ -16,9 +16,11 @@ const fs = require('fs');
 const path = require('path');
 const https = require('https');
 const dns = require('dns');
+const crypto = require('crypto');
 
 const ROOT = path.resolve(__dirname, '..');
 const CACHE = path.join(ROOT, '.cache', 'sources');
+const META = path.join(CACHE, '.meta.json');
 const SOURCES = require('./sources.js');
 
 const ATTEMPTS = 5;
@@ -88,7 +90,11 @@ function httpsGet(url, timeoutMs) {
                 }
                 const chunks = [];
                 res.on('data', (c) => chunks.push(c));
-                res.on('end', () => done({ status: res.statusCode, body: Buffer.concat(chunks).toString('utf8') }));
+                res.on('end', () => done({
+                    status: res.statusCode,
+                    headers: res.headers,
+                    body: Buffer.concat(chunks).toString('utf8'),
+                }));
                 res.on('aborted', () => done({ error: 'aborted mid-transfer' }));
                 res.on('error', (e) => done({ error: e.message }));
             });
@@ -104,7 +110,9 @@ async function fetchText(url) {
         // eslint-disable-next-line no-await-in-loop
         const r = await httpsGet(url, TIMEOUT_MS);
         if (!r.error && r.status === 200 && typeof r.body === 'string'
-            && r.body.length > 50 && !/^\s*<(!doctype|html)/i.test(r.body)) return r.body;
+            && r.body.length > 50 && !/^\s*<(!doctype|html)/i.test(r.body)) {
+            return { body: r.body, headers: r.headers || {} };
+        }
         last = r.error || `HTTP ${r.status}`;
         if (a < ATTEMPTS) {
             // eslint-disable-next-line no-await-in-loop
@@ -185,12 +193,30 @@ function extractAllowRulesWithWildcards(text) {
     return out;
 }
 
+/**
+ * Per-source provenance, cached beside the bodies as `.meta.json`.
+ *
+ * The build's `! Last modified:` stamp has to be a property of the DATA, not of the machine that
+ * happened to download it. A fresh CI checkout hands byte-identical files brand-new mtimes, so an
+ * mtime-derived stamp makes the published file differ from the one built here and turns every
+ * scheduled run into a commit that changes nothing but its own header. What is recorded here
+ * instead is the upstream `Last-Modified` when the server sends one, the sha256 of the normalised
+ * body, and the moment the body was written - enough for the build to derive a stamp that is
+ * identical on any machine holding the same feeds.
+ */
+const META_ENTRIES = {};
+
+function sha256(text) {
+    return crypto.createHash('sha256').update(text, 'utf8').digest('hex');
+}
+
 async function fetchOne(source) {
     const errors = [];
     for (const url of source.urls) {
         // eslint-disable-next-line no-await-in-loop
-        const body = await fetchText(url);
-        if (typeof body !== 'string') { errors.push(`${url}: ${body.error}`); continue; }
+        const r = await fetchText(url);
+        if (r.error) { errors.push(`${url}: ${r.error}`); continue; }
+        const body = r.body;
 
         const isAllowList = source.mode === 'allow';
         const lines = isAllowList
@@ -200,8 +226,19 @@ async function fetchOne(source) {
             : normalise(body);
         if (lines.length === 0) { errors.push(`${url}: produced no usable lines`); continue; }
 
+        const text = `${lines.join('\n')}\n`;
         const dest = path.join(CACHE, `${source.id}.txt`);
-        fs.writeFileSync(dest, `${lines.join('\n')}\n`, 'utf8');
+        fs.writeFileSync(dest, text, 'utf8');
+        const upstream = String(r.headers['last-modified'] || '').trim();
+        const etag = String(r.headers.etag || '').trim();
+        META_ENTRIES[source.id] = {
+            url,
+            fetched: new Date().toISOString(),
+            upstream: Number.isNaN(Date.parse(upstream)) ? null : new Date(upstream).toISOString(),
+            etag: etag || null,
+            sha256: sha256(text),
+            lines: lines.length,
+        };
         return {
             ok: true, dest, count: lines.length, bytes: body.length, via: url === source.urls[0] ? null : url,
         };
@@ -212,6 +249,15 @@ async function fetchOne(source) {
 async function main() {
     const force = process.argv.includes('--force');
     fs.mkdirSync(CACHE, { recursive: true });
+
+    // Carry provenance forward: a cached feed keeps the timestamp it was recorded with, so the
+    // build stamp does not drift just because this run chose not to re-download the body.
+    try {
+        Object.assign(META_ENTRIES, JSON.parse(fs.readFileSync(META, 'utf8')));
+    } catch {
+        // First run, or a cache written before provenance existed.
+    }
+
     const catalog = SOURCES.filter((s) => s.urls && s.urls.length);
     const results = new Map();
     const queue = [];
@@ -219,8 +265,18 @@ async function main() {
     catalog.forEach((s) => {
         const dest = path.join(CACHE, `${s.id}.txt`);
         if (!force && fs.existsSync(dest) && fs.statSync(dest).size > 20) {
+            const text = fs.readFileSync(dest, 'utf8');
+            const prior = META_ENTRIES[s.id];
+            // Cache written before provenance existed, or by an interrupted run: record the digest
+            // of what is sitting on disk so the stamp is still a function of the data. The body is
+            // read only, never rewritten, so this costs nothing and cannot churn mtimes.
+            if (!prior || !prior.sha256) {
+                META_ENTRIES[s.id] = Object.assign({
+                    url: s.urls[0], fetched: fs.statSync(dest).mtime.toISOString(), upstream: null, etag: null,
+                }, prior, { sha256: sha256(text) });
+            }
             results.set(s.id, {
-                ok: true, dest, count: fs.readFileSync(dest, 'utf8').split('\n').filter(Boolean).length, cached: true,
+                ok: true, dest, count: text.split('\n').filter(Boolean).length, cached: true,
             });
         } else queue.push(s);
     });
@@ -251,6 +307,14 @@ async function main() {
         console.log('unavailable (the build will skip these and report them):');
         failed.forEach((s) => console.log(`  - ${s.id}: ${(results.get(s.id) || {}).error || 'unknown'}`));
     }
+
+    // Persist provenance. Entries for feeds the build no longer uses are dropped by rebuilding the
+    // object from the current catalogue rather than merging into the old file.
+    const kept = {};
+    catalog.forEach((s) => { if (META_ENTRIES[s.id]) kept[s.id] = META_ENTRIES[s.id]; });
+    const stamps = Object.values(kept).map((m) => m.upstream || m.fetched).filter(Boolean).sort();
+    fs.writeFileSync(META, `${JSON.stringify(kept, null, 2)}\n`, 'utf8');
+    if (stamps.length) console.log(`  cache stamp: ${stamps[stamps.length - 1]} (from ${stamps.length} recorded sources)`);
     process.exit(0);
 }
 

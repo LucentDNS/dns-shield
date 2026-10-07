@@ -304,8 +304,7 @@ const EDITORIAL = {
         zhFormat: '@@||domain^ 放行规则，含通配符',
         zhPurpose: '不是本项目的 feed。这是别人会安装的白名单，抓取它只为了让 REFERRAL-GAPS.md '
             + '能在任何机器上重新生成，绝不参与编译。',
-    },
-};
+    },};
 
 /** How the fetcher has to treat the raw bytes. Anything not listed falls back to a neutral note. */
 const FORMAT_NOTE = {
@@ -322,13 +321,16 @@ const FORMAT_NOTE = {
 // ─────────────────────────────────────────────────────────────────── helpers
 
 function esc(text) {
-    // Pipes inside the adblock allow-rule literal (@@||domain^) are data, not cell boundaries: a
-    // backslash before them would survive into the rendered document, so they are re-protected
-    // instead of being escaped along with genuine cell separators.
+    // A `|` inside a table cell is a cell boundary even when it sits inside a code span, so the
+    // literals the Format column documents (an allow rule is `@@||domain^`) would split the row in
+    // four. Escaping them as `\|` is what CommonMark wants and what a renderer consumes, but it is
+    // fragile: anything that splits the row on `|` before rendering the markdown - `cut`, a naive
+    // awk, the check that verifies this very file - then sees the wrong number of cells. The two
+    // adblock pipes are therefore written as the `&#124;` character reference, which renders as `|`
+    // and contains no delimiter at all.
     return String(text == null ? '' : text)
-        .replace(/@@\|\|([a-z0-9][a-z0-9.-]*)\^/gi, (m, domain) => `\u0000${domain}\u0000`)
+        .replace(/@@\|\|([a-z0-9][a-z0-9.-]*)\^/gi, (m, domain) => `@@&#124;&#124;${domain}^`)
         .replace(/\|/g, '\\|')
-        .replace(/\u0000/g, '||')
         .replace(/\r?\n/g, ' ');
 }
 
@@ -415,7 +417,7 @@ function layerTable(layer, lang) {
             esc(editorial(s.id, zh ? 'zhFormat' : 'enFormat')),
             esc(s.refresh),
             esc(editorial(s.id, zh ? 'zhPurpose' : 'enPurpose')),
-            esc(s.risk),
+            esc(zh && s.riskZh ? s.riskZh : s.risk),
         ];
         if (s.mode) {
             cells[1] += zh ? `（mode: \`${s.mode}\`）` : ` (mode: \`${s.mode}\`)`;
@@ -669,10 +671,10 @@ function buildEn() {
     L.push('straight from `tools/sources.js`. Two columns are not catalogue fields and are kept '
         + 'editorially in the');
     L.push('generator: **Format** and **Purpose**. The **Risk note** column is the catalogue\'s own '
-        + '`risk` text,');
-    L.push('unmodified. Entry counts are line counts of the cached copies, not figures published by '
-        + 'the upstream');
-    L.push('projects.');
+        + 'text -');
+    L.push('`risk` in this document, `riskZh` in the Chinese one - unmodified. Entry counts are line '
+        + 'counts of the');
+    L.push('cached copies, not figures published by the upstream projects.');
     L.push('');
     return L.join('\n');
 }
@@ -773,8 +775,8 @@ function buildZh() {
     L.push('');
     L.push('目录字段 **id**、**name**、**urls**、**layer**、**refresh**、**risk**、**mode** 都是直接从');
     L.push('`tools/sources.js` 读出来的。表里有两列不是目录字段，而是写在生成器里的编辑内容：');
-    L.push('**格式** 和 **用途**。**风险说明** 一列是目录里自带的 `risk` 原文，未经改写。');
-    L.push('条目数取自本地缓存的副本行数，不是上游项目公布的数字。');
+    L.push('**格式** 和 **用途**。**风险说明** 一列是目录里自带的原文：本文档用 `riskZh`，');
+    L.push('英文文档用 `risk`，两侧都未经改写。条目数取自本地缓存的副本行数，不是上游项目公布的数字。');
     L.push('');
     return L.join('\n');
 }

@@ -66,16 +66,14 @@ Feeds in this layer: 6
 
 | id | Feed name | Upstream URL(s) | Format | Refresh | Purpose | Risk note |
 | --- | --- | --- | --- | --- | --- | --- |
-| `urlhaus-domains` | URLhaus malicious domain feed (abuse.ch) | urlhaus.abuse.ch/downloads/text_online/ | URLs (online), one per line | realtime | Current malware distribution sites; the fetcher keeps only the hostname. | URLs, not hostnames - must be normalised. Short-lived hosts, so a given domain ages out. |
-| `urlhaus-hostfile` | URLhaus hosts-format feed (abuse.ch) | urlhaus.abuse.ch/downloads/hostfile/ | hosts format | realtime | The same abuse.ch data in hosts shape, as a second pass over the same topic. | Low. Overlaps the domain feed; kept because the shapes differ and occasionally complement. |
+| `urlhaus-domains` | URLhaus malicious domain feed (abuse.ch) (562 entries) | urlhaus.abuse.ch/downloads/text_online/ | URLs (online), one per line | realtime | Current malware distribution sites; the fetcher keeps only the hostname. | URLs, not hostnames - must be normalised. Short-lived hosts, so a given domain ages out. |
+| `urlhaus-hostfile` | URLhaus hosts-format feed (abuse.ch) (396 entries) | urlhaus.abuse.ch/downloads/hostfile/ | hosts format | realtime | The same abuse.ch data in hosts shape, as a second pass over the same topic. | Low. Overlaps the domain feed; kept because the shapes differ and occasionally complement. |
 | `phishing-army` | Phishing Army extended blocklist (144,243 entries) | phishing.army/download/phishing_army_blocklist_extended.txt | bare domains, one per line | several times daily | Large phishing blocklist, extended variant with apex entries included. | The extended variant includes apex entries; a handful of borderline legit registrations exist. |
 | `openphish` | OpenPhish live phishing feed (259 entries) | openphish.com/feed.txt | URLs, one per line | realtime (delayed free tier) | Live phishing URLs from the free feed; the fetcher keeps only the hostname. | Free tier is a ~300-entry delayed sample, not the full feed. |
 | `spam404` | Spam404 domain blacklist (8,140 entries) | ghproxy.net/https://raw.githubusercontent.com/Spam404/lists/master/main-blacklist.txt<br>gh-proxy.com/https://raw.githubusercontent.com/Spam404/lists/master/main-blacklist.txt<br>cdn.statically.io/gh/Spam404/lists/master/main-blacklist.txt<br>raw.githubusercontent.com/Spam404/lists/master/main-blacklist.txt | hosts / bare domains | weekly | Auction spam and forum spam registrations. | Low. Stable auction/spam registrations. |
 | `scamblocklist` | Scam Blocklist by DurableNapkin (2,189 entries) | ghproxy.net/https://raw.githubusercontent.com/durablenapkin/scamblocklist/master/hosts.txt<br>gh-proxy.com/https://raw.githubusercontent.com/durablenapkin/scamblocklist/master/hosts.txt<br>cdn.statically.io/gh/durablenapkin/scamblocklist/master/hosts.txt<br>raw.githubusercontent.com/durablenapkin/scamblocklist/master/hosts.txt | hosts format | weekly | Scam domains, single topic. | Low. Single-topic scam domains. |
 
-Cached: 4/6. Entry counts are line counts of the last fetched copy in .cache/sources/ and change between runs.
-
-Not fetched yet: `urlhaus-domains`, `urlhaus-hostfile` - run `node tools/fetch.js urlhaus-domains`.
+Cached: 6/6. Entry counts are line counts of the last fetched copy in .cache/sources/ and change between runs.
 
 Four URLs per GitHub-hosted feed: three mirrors first, then the canonical raw.githubusercontent.com URL as the fallback. `urls` in tools/sources.js is ordered, and the fetcher stops at the first URL that returns a usable body.
 
@@ -149,7 +147,7 @@ Feeds in this layer: 1
 
 | id | Feed name | Upstream URL(s) | Format | Refresh | Purpose | Risk note |
 | --- | --- | --- | --- | --- | --- | --- |
-| `adguard-exceptions` | AdGuard DNS filter exception rules (GPL-3.0) (172 entries) (mode: `allow`) | ghproxy.net/https://raw.githubusercontent.com/AdguardTeam/AdGuardSDNSFilter/master/Filters/exceptions.txt<br>gh-proxy.com/https://raw.githubusercontent.com/AdguardTeam/AdGuardSDNSFilter/master/Filters/exceptions.txt<br>cdn.statically.io/gh/AdguardTeam/AdGuardSDNSFilter/master/Filters/exceptions.txt<br>raw.githubusercontent.com/AdguardTeam/AdGuardSDNSFilter/master/Filters/exceptions.txt | ||domain|| allow rules (kept verbatim) | per issue | Confirmed false positives, published upstream with the bug report behind each one. | Each rule carries the bug report that justified it. Allow rules only - cannot inflate coverage. |
+| `adguard-exceptions` | AdGuard DNS filter exception rules (GPL-3.0) (172 entries) (mode: `allow`) | ghproxy.net/https://raw.githubusercontent.com/AdguardTeam/AdGuardSDNSFilter/master/Filters/exceptions.txt<br>gh-proxy.com/https://raw.githubusercontent.com/AdguardTeam/AdGuardSDNSFilter/master/Filters/exceptions.txt<br>cdn.statically.io/gh/AdguardTeam/AdGuardSDNSFilter/master/Filters/exceptions.txt<br>raw.githubusercontent.com/AdguardTeam/AdGuardSDNSFilter/master/Filters/exceptions.txt | @@&#124;&#124;domain^ allow rules (kept verbatim) | per issue | Confirmed false positives, published upstream with the bug report behind each one. | Each rule carries the bug report that justified it. Allow rules only - cannot inflate coverage. |
 
 Cached: 1/1. Entry counts are line counts of the last fetched copy in .cache/sources/ and change between runs.
 
@@ -183,7 +181,7 @@ Feeds in this layer: 1
 
 | id | Feed name | Upstream URL(s) | Format | Refresh | Purpose | Risk note |
 | --- | --- | --- | --- | --- | --- | --- |
-| `allowlist-referral` | HaGeZi's Allowlist Referral (reference only) (936 entries) (mode: `allow`) | adguardteam.github.io/HostlistsRegistry/assets/filter_45.txt | ||domain|| allow rules, wildcards included | weekly | NOT a feed for this project. It is the allowlist other people install, fetched only so REFERRAL-GAPS.md can be regenerated on any machine. It is never compiled in. | None to this list - it is never compiled in. It is here because AdGuard Home applies allowlist filters OVER blocklists, so installing it releases 273 of our blocked hostnames (including adjust.com, appsflyer.com and amazon-adsystem.com) no matter which blocklists are enabled. tools/whitelist-impact.js measures it; tools/referral-gaps.js documents it. |
+| `allowlist-referral` | HaGeZi's Allowlist Referral (reference only) (936 entries) (mode: `allow`) | adguardteam.github.io/HostlistsRegistry/assets/filter_45.txt | @@&#124;&#124;domain^ allow rules, wildcards included | weekly | NOT a feed for this project. It is the allowlist other people install, fetched only so REFERRAL-GAPS.md can be regenerated on any machine. It is never compiled in. | None to this list - it is never compiled in. It is here because AdGuard Home applies allowlist filters OVER blocklists, so installing it releases 273 of our blocked hostnames (including adjust.com, appsflyer.com and amazon-adsystem.com) no matter which blocklists are enabled. tools/whitelist-impact.js measures it; tools/referral-gaps.js documents it. |
 
 Cached: 1/1. Entry counts are line counts of the last fetched copy in .cache/sources/ and change between runs.
 
@@ -227,6 +225,6 @@ AdGuard DNS filter 178,228 rules, HaGeZi's Pro 198,605 rules, OISD Big 240,418 r
 
 The catalogue fields **id**, **name**, **urls**, **layer**, **refresh**, **risk** and **mode** are read
 straight from `tools/sources.js`. Two columns are not catalogue fields and are kept editorially in the
-generator: **Format** and **Purpose**. The **Risk note** column is the catalogue's own `risk` text,
-unmodified. Entry counts are line counts of the cached copies, not figures published by the upstream
-projects.
+generator: **Format** and **Purpose**. The **Risk note** column is the catalogue's own text -
+`risk` in this document, `riskZh` in the Chinese one - unmodified. Entry counts are line counts of the
+cached copies, not figures published by the upstream projects.

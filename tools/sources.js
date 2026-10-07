@@ -49,6 +49,7 @@ module.exports = [
         layer: 'coverage',
         refresh: 'daily',
         risk: 'Aggregated compilation. Widest net of the four; also the one most likely to carry a borderline domain, because it accepts anything with a credible report.',
+        riskZh: '聚合清单。四份里收得最宽的一份；也最容易带上边界域名，因为它只要有可信报告就收。',
     },
     {
         id: 'hagezi-pro',
@@ -57,6 +58,7 @@ module.exports = [
         layer: 'coverage',
         refresh: 'daily',
         risk: 'Aggregated compilation. Curated for a balance of ads, tracking and abuse; its "Pro" tier is deliberately not the most aggressive one.',
+        riskZh: '聚合清单。在广告、追踪和滥用之间取平衡，其 "Pro" 档刻意不是最激进的那一档。',
     },
     {
         id: 'adrules-dns',
@@ -65,6 +67,7 @@ module.exports = [
         layer: 'coverage',
         refresh: 'daily',
         risk: 'Aggregated compilation with strong China coverage. Larger share of Chinese regional rules than the other three.',
+        riskZh: '聚合清单，国内覆盖较好。中文地区规则的占比高于另外三份。',
     },
     {
         id: 'adguard-dns-filter',
@@ -73,6 +76,7 @@ module.exports = [
         layer: 'coverage',
         refresh: 'daily',
         risk: 'Aggregated compilation maintained by AdGuard. Deliberately conservative - it leaves many ad hosts to its browser extension - so it is the narrowest of the four by design.',
+        riskZh: '由 AdGuard 维护的聚合清单。刻意保守——把不少广告域名留给自家的浏览器扩展——所以按设计它就是四份里收得最窄的。',
     },
 
     // ───────────────────────────────────────────── L1 security baseline
@@ -82,7 +86,13 @@ module.exports = [
         urls: ['https://urlhaus.abuse.ch/downloads/text_online/'],
         layer: 'security',
         refresh: 'realtime',
+        // abuse.ch answers 503s and timeouts often enough (measured: two of three forced refetches) that
+        // failing the build over it would put a red X on a repository whose published list is fine. A
+        // missing feed makes the list narrower, never wrong, so its absence is a NOTE here and a hard
+        // error only for sources the list's correctness actually rests on.
+        optional: true,
         risk: 'URLs, not hostnames - must be normalised. Short-lived hosts, so a given domain ages out.',
+        riskZh: '是完整 URL 而不是主机名——必须先规范化。这类主机寿命很短，某个域名过一阵就会自然消失。',
     },
     {
         id: 'urlhaus-hostfile',
@@ -90,7 +100,9 @@ module.exports = [
         urls: ['https://urlhaus.abuse.ch/downloads/hostfile/'],
         layer: 'security',
         refresh: 'realtime',
+        optional: true,
         risk: 'Low. Overlaps the domain feed; kept because the shapes differ and occasionally complement.',
+        riskZh: '低。与域名版 feed 有重叠；保留它是因为格式不同，偶尔还能互补。',
     },
     {
         id: 'phishing-army',
@@ -99,6 +111,7 @@ module.exports = [
         layer: 'security',
         refresh: 'several times daily',
         risk: 'The extended variant includes apex entries; a handful of borderline legit registrations exist.',
+        riskZh: 'extended 变体包含顶级域名条目；有少量处在合法边界上的注册。',
     },
     {
         id: 'openphish',
@@ -107,6 +120,7 @@ module.exports = [
         layer: 'security',
         refresh: 'realtime (delayed free tier)',
         risk: 'Free tier is a ~300-entry delayed sample, not the full feed.',
+        riskZh: '免费档只是约 300 条、有延迟的样本，不是完整 feed。',
     },
     {
         id: 'spam404',
@@ -115,6 +129,7 @@ module.exports = [
         layer: 'security',
         refresh: 'weekly',
         risk: 'Low. Stable auction/spam registrations.',
+        riskZh: '低。稳定的抢注/垃圾注册域名。',
     },
     {
         id: 'scamblocklist',
@@ -123,6 +138,7 @@ module.exports = [
         layer: 'security',
         refresh: 'weekly',
         risk: 'Low. Single-topic scam domains.',
+        riskZh: '低。只收诈骗类域名，主题单一。',
     },
 
     // ───────────────────────────────────────────── L2 general ads and trackers
@@ -133,6 +149,7 @@ module.exports = [
         layer: 'ads-trackers',
         refresh: 'weekly',
         risk: 'Very low. Only confirmed pure-tracking hosts.',
+        riskZh: '极低。只收已确认的纯追踪主机。',
     },
     {
         id: 'easyprivacy-thirdparty',
@@ -141,6 +158,7 @@ module.exports = [
         layer: 'ads-trackers',
         refresh: 'weekly',
         risk: 'Medium. Some entries sit on the analytics/CDN boundary.',
+        riskZh: '中。部分条目处在统计上报与 CDN 的边界上。',
     },
     {
         id: 'adguard-trackers',
@@ -149,6 +167,7 @@ module.exports = [
         layer: 'ads-trackers',
         refresh: 'weekly',
         risk: 'Low. Upstream restricts this file to full-domain rules by policy.',
+        riskZh: '低。上游按政策把这份文件限制为整域规则。',
     },
     {
         id: 'adguard-mobile-trackers',
@@ -157,6 +176,7 @@ module.exports = [
         layer: 'ads-trackers',
         refresh: 'weekly',
         risk: 'Low. Mobile SDK endpoints.',
+        riskZh: '低。移动 SDK 端点。',
     },
     {
         id: 'easylist-adservers',
@@ -165,6 +185,7 @@ module.exports = [
         layer: 'ads-trackers',
         refresh: 'weekly',
         risk: 'Largest layer source. Occasional upstream misclassification, so it is the first place to look when something breaks.',
+        riskZh: '本层条目最多的来源。上游偶尔会分错类，所以出问题时这里是第一个该查的地方。',
     },
     {
         id: 'easylist-thirdparty',
@@ -173,6 +194,7 @@ module.exports = [
         layer: 'ads-trackers',
         refresh: 'weekly',
         risk: 'Low.',
+        riskZh: '低。',
     },
     {
         id: 'adguard-adservers',
@@ -181,6 +203,7 @@ module.exports = [
         layer: 'ads-trackers',
         refresh: 'weekly',
         risk: 'Low. Upstream policy keeps this file to full-domain rules.',
+        riskZh: '低。上游政策把这份文件限制为整域规则。',
     },
     {
         id: 'adguard-foreign',
@@ -189,6 +212,7 @@ module.exports = [
         layer: 'ads-trackers',
         refresh: 'weekly',
         risk: 'Mixed upstream file; only its domain-level rules survive normalisation, so its yield is small.',
+        riskZh: '上游的混合文件；规范化之后只有域名级规则能留下，所以产出很少。',
     },
     {
         id: 'adguard-mobile-ads',
@@ -197,6 +221,7 @@ module.exports = [
         layer: 'ads-trackers',
         refresh: 'weekly',
         risk: 'Low.',
+        riskZh: '低。',
     },
     {
         id: 'adguard-cryptominers',
@@ -205,6 +230,7 @@ module.exports = [
         layer: 'ads-trackers',
         refresh: 'weekly',
         risk: 'Low. Small but high value.',
+        riskZh: '低。条目很少，但价值高。',
     },
     {
         id: 'peter-lowe',
@@ -213,6 +239,7 @@ module.exports = [
         layer: 'ads-trackers',
         refresh: 'monthly',
         risk: 'Low. Long-lived, conservative, updated slowly.',
+        riskZh: '低。清单长期存在、改动保守、更新很慢。',
     },
 
     // ───────────────────────────────────────────── L3 China-specific telemetry / ad SDK
@@ -223,6 +250,7 @@ module.exports = [
         layer: 'china-telemetry',
         refresh: 'daily',
         risk: 'HIGHEST in this list. Largest single source (~108k) and coarse-grained; the first suspect when a Chinese app misbehaves.',
+        riskZh: '本清单中最高。条目最多的单一来源（约 108k），而且颗粒度很粗；国内 App 出问题时，第一个该怀疑的就是它。',
     },
     {
         id: 'adguard-chinese-ads',
@@ -231,6 +259,7 @@ module.exports = [
         layer: 'china-telemetry',
         refresh: 'weekly',
         risk: 'Low. Small and targeted.',
+        riskZh: '低。条目少，针对性强。',
     },
     {
         id: 'adguard-chinese-firstparty',
@@ -239,6 +268,7 @@ module.exports = [
         layer: 'china-telemetry',
         refresh: 'weekly',
         risk: 'Low. Tiny but precise.',
+        riskZh: '低。条目极少，但很精准。',
     },
 
     // ───────────────────────────────────────────── L4 exceptions (allow rules)
@@ -250,6 +280,7 @@ module.exports = [
         mode: 'allow',
         refresh: 'per issue',
         risk: 'Each rule carries the bug report that justified it. Allow rules only - cannot inflate coverage.',
+        riskZh: '每条规则都带着当初促成它的 bug 报告。只有放行规则——不可能撑大覆盖面。',
     },
 
     // ───────────────────────────────────────────── L5 exclusions (domains to un-block upstream)
@@ -261,6 +292,7 @@ module.exports = [
         mode: 'exclude',
         refresh: 'per issue',
         risk: 'Domains AdGuard un-blocked after real breakage reports (banking, retail, consent platforms). Applied as exclusions so our blocking layers cannot re-introduce them.',
+        riskZh: 'AdGuard 在收到真实故障报告（银行、零售、同意管理平台）后解除拦截的域名。本项目把它们作为排除项应用，这样拦截层不会再把它们加回来。',
     },
 
     // ───────────────────────────────────────────── Reference only (never compiled)
@@ -276,5 +308,6 @@ module.exports = [
         required: false,
         refresh: 'weekly',
         risk: 'None to this list - it is never compiled in. It is here because AdGuard Home applies allowlist filters OVER blocklists, so installing it releases 273 of our blocked hostnames (including adjust.com, appsflyer.com and amazon-adsystem.com) no matter which blocklists are enabled. tools/whitelist-impact.js measures it; tools/referral-gaps.js documents it.',
+        riskZh: '对本列表没有风险——它从不参与编译。之所以收录，是因为 AdGuard Home 是用白名单过滤器覆盖黑名单的，所以一旦装上它，不管启用了哪几条黑名单，都会释放本列表拦截的 273 个主机名（包括 adjust.com、appsflyer.com 和 amazon-adsystem.com）。tools/whitelist-impact.js 负责测量，tools/referral-gaps.js 负责记录。',
     },
 ];

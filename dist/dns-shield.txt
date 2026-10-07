@@ -3,12 +3,13 @@
 ! Homepage: https://github.com/LucentDNS/dns-shield
 ! License: GPL-3.0
 ! Version: 1.0.0
-! Last modified: 2026-10-07T08:19:19.934Z
+! Last modified: 2026-10-07T08:12:33.000Z
+! List revision: 6d37dc164e2d
 !
 ! Built from 20 single-topic upstream feeds, 4 compiled
 ! coverage lists and 2 policy lists. The policy lists block nothing: they only
 ! withdraw rules that upstream confirmed as false positives.
-! Contains 516,950 block rules and 19 exception rules.
+! Contains 516,987 block rules and 19 exception rules.
 ! 19 upstream-confirmed false positives are explicitly allowed.
 !
 ! Syntax: AdGuard / DNS-level rules only (||domain^ and @@||domain^). No cosmetic,
@@ -20611,6 +20612,7 @@
 ||accessremits.net^
 ||accesssearch.click^
 ||accesssrewards.firebaseapp.com^
+||accesstelematics.com^
 ||accesstherealworld.com^
 ||accessticket.ru^
 ||accesstoevent.ru^
@@ -21963,6 +21965,7 @@
 ||acunnmedya.com^
 ||acuramelonp.xyz^
 ||acurelief.com^
+||acusense.ae^
 ||acusticjjw.pl^
 ||acustikaauditiva.com.br^
 ||acustomizedgift.com^
@@ -51518,6 +51521,7 @@
 ||aol.spb.su^
 ||aol60.yolasite.com^
 ||aolfvjokwdkrw.online^
+||aolgepacklng.com^
 ||aolianshengwu.com^
 ||aolikes.com^
 ||aoljk-po0c.weebly.com^
@@ -65077,6 +65081,7 @@
 ||baezlvydomldo.space^
 ||baf-info.com^
 ||baf3838b31.com^
+||bafdili.com^
 ||bafem.juiceplus.com^
 ||baffae.alcott.eu^
 ||baffetacoigneevinced.qpon^
@@ -92406,6 +92411,7 @@
 ||cd.promesajoyeria.com.mx^
 ||cd.smithrowe.co.uk^
 ||cd.supersonic-parts.de^
+||cd.textfiles.com^
 ||cd.thejelvi.com^
 ||cd.usyahooapis.com^
 ||cd165.com^
@@ -92914,6 +92920,7 @@
 ||cdn.piazzasquareitaliano.com^
 ||cdn.pinktriangle.ca^
 ||cdn.pitaya.dk^
+||cdn.pixelbin.io^
 ||cdn.plausible.poweredby.soy^
 ||cdn.pongo.hs.fi^
 ||cdn.pongo.is.fi^
@@ -94625,6 +94632,7 @@
 ||cfs1.uzone.id^
 ||cfs13.tistory.com^
 ||cfs2.uzone.id^
+||cfs5.tistory.com^
 ||cfsaze.retailmenot.ca^
 ||cfsaze.retailmenot.com^
 ||cfscwiseplank.today^
@@ -132417,6 +132425,7 @@
 ||dl-vip.pcfaster.baidu.co.th^
 ||dl-wps.com^
 ||dl.1003b.56a.com^
+||dl.360safe.com^
 ||dl.37wan.cn^
 ||dl.4kporn.xxx^
 ||dl.6thstreet.com^
@@ -141379,6 +141388,7 @@
 ||easycookie.io^
 ||easycounter.com^
 ||easycredit.pro^
+||easycryptos.org^
 ||easycurrentnewsaccess.com^
 ||easydecision.net^
 ||easydisplay.no^
@@ -141983,6 +141993,7 @@
 ||ebtwanvamfwwi.space^
 ||ebtxxz.travellink.se^
 ||ebuero.online^
+||ebullientlife.in^
 ||ebupeu.nt.nativetrees.co.uk^
 ||ebuqxsjq.com^
 ||eburnejula.cyou^
@@ -144317,6 +144328,7 @@
 ||eidmygko.com^
 ||eidolonbeer.com^
 ||eidosconsultores.com^
+||eidoss.mx^
 ||eidoswarpers.cyou^
 ||eiectrum.net^
 ||eieiz.com^
@@ -160787,6 +160799,7 @@
 ||files.businessmondo.com^
 ||files.bz^
 ||files.cat^
+||files.constantcontact.com^
 ||files.csr11.net.anwalt.de^
 ||files.dsnetwb.com^
 ||files.emailmeform.com^
@@ -168728,6 +168741,7 @@
 ||foultouch.com^
 ||found.ee^
 ||foundationalconcepts.world^
+||foundationforwomenshealth.com^
 ||foundationhorny.com^
 ||foundationmetarecover.com^
 ||foundationnational-ai.live^
@@ -171536,6 +171550,7 @@
 ||fromsunny.com^
 ||fromthetop.io^
 ||fromthetop.solutions^
+||fromthetrenchesworldreport.com^
 ||froncetravail.fr^
 ||frondak.shop^
 ||front-apps-hth.com^
@@ -198716,6 +198731,7 @@
 ||hcrnxbzntqrks.online^
 ||hcs-promo.makemytrip.com^
 ||hcsmec.decathlon.pt^
+||hcsnet.com.br^
 ||hcsnjsp.pics^
 ||hcstore.vip^
 ||hctcc.weebly.com^
@@ -211092,6 +211108,7 @@
 ||ikonsencoopelb.cfd^
 ||ikonsuomic.cfd^
 ||ikoodeiodoitoetierou.site^
+||ikovrsps.com^
 ||ikpec.com^
 ||ikqo0.com^
 ||ikquanearegiw.pro^
@@ -212132,6 +212149,7 @@
 ||images.worldofshowjumping.com^
 ||images.xtraa.org^
 ||images1.test.de^
+||images2.imgbox.com^
 ||images2.verizonconnect.com^
 ||images3.verizonconnect.com^
 ||images4you.net^
@@ -212465,6 +212483,7 @@
 ||img1.km.com^
 ||img1.leyun365.com^
 ||img1.pszyzxh.org^
+||img1.wsimg.com^
 ||img1.ysts8.com^
 ||img11.biyan8.com^
 ||img16.diyifanwen.com^
@@ -254990,6 +255009,7 @@
 ||loankeep.com^
 ||loanme.pl^
 ||loanmoney-th.com^
+||loanoffer.co.in^
 ||loanonline.ph^
 ||loanpayment.live^
 ||loans-logger-prod.angelone.in^
@@ -264842,6 +264862,7 @@
 ||main.ctolabperfstats.com^
 ||main.hairfree.lt^
 ||main.jiukang.org^
+||main.lahoreshoes.com^
 ||main.mdrates.com^
 ||main.monisethnicwear.com^
 ||main.mysteelvibe.online^
@@ -283393,6 +283414,7 @@
 ||mockdealzone.com^
 ||mockertheurgy.cfd^
 ||mockingfish.com^
+||mockupcorporation.com^
 ||mocluvrxsluqj.space^
 ||mocna-fondowora.com^
 ||mocna-kapitornia.com^
@@ -304421,6 +304443,7 @@
 ||oczeilqyw.com^
 ||od-todesk.com.cn^
 ||od.gongenic.com^
+||od.lk^
 ||od.stimefloccus.shop^
 ||od.unangryrouleau.com^
 ||od3maf.top^
@@ -308352,6 +308375,7 @@
 ||oms1.sportsnet.ca^
 ||omsanoluklu.com^
 ||omshedinjaor.com^
+||omskin.org^
 ||omskrielt.com^
 ||omsmedia.com^
 ||omst.crazyporn.xxx^
@@ -323337,6 +323361,7 @@
 ||physiciancowardly.com^
 ||physicisti.com^
 ||physicsbrain.xyz^
+||physicsbyfiziks.org^
 ||physicsimpatient.com^
 ||physicspresume.com^
 ||physicstees.com^
@@ -324100,6 +324125,7 @@
 ||pinaclevaultz.net^
 ||pinapple.pl^
 ||pinarmermer.com^
+||pinaview.com^
 ||pinayflix.re^
 ||pinayflix.vip^
 ||pinbarnkfx.top^
@@ -337310,6 +337336,7 @@
 ||protexting.com^
 ||proteztirnakmerkezi.com^
 ||prothepito.shop^
+||protherapycenter.com^
 ||prothermwoodpellets.com^
 ||prothesistendon.com^
 ||prothostr.net^
@@ -339335,6 +339362,7 @@
 ||pub-6a3d146cbfec43ec9112d67612054c37.r2.dev^
 ||pub-6a6fddaf65084af2a8f4050fda9c9a89.r2.dev^
 ||pub-6a8bf75637954bf2a340a030b0bce530.r2.dev^
+||pub-6a90252f6d70443d960d6ac029dbd446.r2.dev^
 ||pub-6a9486f046fb4f93bcd4d9ead1ff8f9e.r2.dev^
 ||pub-6a9768e0fffb4500b7328515b4979ae4.r2.dev^
 ||pub-6a9cc012faba410f830dfac89e87682b.r2.dev^
@@ -340168,6 +340196,7 @@
 ||pub-ec642a1730dc48848c2a8f8cd368aebc.r2.dev^
 ||pub-ec6927bca8f6423e8977cba73b934c0e.r2.dev^
 ||pub-ec756871e9fc4365b71440c42a889801.r2.dev^
+||pub-ecb7161ffc7a4a67bdd8761583e21d16.r2.dev^
 ||pub-ecc15af033cf44ad86d1d068ef7b9776.r2.dev^
 ||pub-ecd916a610244763aae5736630cf0718.r2.dev^
 ||pub-ece32ef2b893469189534a6e7fdff32f.r2.dev^
@@ -435956,6 +435985,7 @@
 ||tabac-coupon.fr^
 ||tabac-superu.fr^
 ||tabaclilia.store^
+||tabak.hr^
 ||tabantabana.com^
 ||tabaraktraders.com^
 ||tabata-pardo.com^
@@ -445246,6 +445276,7 @@
 ||the-zyberlichbeamai.org^
 ||the.chayapest.com^
 ||the.checkfox.de^
+||the.earth.li^
 ||the.kroybazar.com^
 ||the.motherlaps.com^
 ||the.offshoregadget.com^
@@ -470588,6 +470619,7 @@
 ||uplink.aruba.it^
 ||uplitbeydom.cyou^
 ||upload-up.qtfm.cn^
+||upload.cc^
 ||upload4earn.org^
 ||uploadamigo.com^
 ||uploadbox.com^
@@ -497070,6 +497102,7 @@
 ||www.0551zgz.com^
 ||www.1120.com.tw^
 ||www.142904.com^
+||www.150.co.il^
 ||www.163ren.com^
 ||www.17bqg.top^
 ||www.18dusun.com^
@@ -497224,6 +497257,7 @@
 ||www.amomales.com^
 ||www.amort.cn^
 ||www.ampervid.com^
+||www.amyuni.com^
 ||www.analytics.niklasjordan.com^
 ||www.anbdd19.xyz^
 ||www.andyhawk.free-online.co.uk^
@@ -497826,6 +497860,7 @@
 ||www.hugesector.com^
 ||www.hunpingou.com^
 ||www.hunterspeed.com^
+||www.hwgeneralins.com^
 ||www.hyfyuan.com^
 ||www.hypeprop.com^
 ||www.hypetrust.com^
@@ -498298,6 +498333,7 @@
 ||www.qupinhj.com^
 ||www.qwupoq.com^
 ||www.qzgjprj.com^
+||www.r-tt.com^
 ||www.rackusread.com^
 ||www.rajtoursdubai.com^
 ||www.randppro-cuts.com^
@@ -498382,6 +498418,7 @@
 ||www.seinse27.com^
 ||www.sellpetrol.com^
 ||www.sellrubber.com^
+||www.sendspace.com^
 ||www.server.fontemix.com.br^
 ||www.service.czdirect.nl^
 ||www.servitemequipos.cl^
@@ -498525,6 +498562,7 @@
 ||www.technocost.com^
 ||www.technygrow.com^
 ||www.techyscope.com^
+||www.teknoarge.com^
 ||www.teltech.hu^
 ||www.tenantbackgronudsearch.com^
 ||www.teresinaapartment.com^

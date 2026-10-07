@@ -91,8 +91,9 @@ commits when it actually differs. Two more properties matter if you are relying 
 - **It never publishes an unverified list.** Audit, coverage reconciliation and a regression budget
   all run before the commit step and exit non-zero on a regression, so a broken build leaves
   yesterday's file in place rather than pushing something worse to your resolver.
-- **The timestamp is reproducible.** `! Last modified:` is derived from the newest feed file, not
-  from the clock, so `dist/stats.json` hashes the bytes you actually downloaded.
+- **The header is reproducible.** A `! List revision:` digest over the feed bodies, plus a
+  `! Last modified:` derived from upstream headers rather than the clock, means `dist/stats.json`
+  hashes the bytes you actually downloaded - not the moment they were rebuilt.
 
 GitHub disables scheduled workflows in a repository that has seen no activity for 60 days; the daily
 commit is itself activity, so this only becomes relevant if the upstream feeds all go quiet for two
@@ -290,15 +291,23 @@ reuse any cached feed body larger than 20 bytes, so there is no `--missing` to p
 `node tools/build.js --no-compile` reuses `dist/.compiled.raw`; `node tools/build.js --out <path>`
 writes the list somewhere else.
 
-The published file is byte-reproducible. Its `! Last modified:` line is not a wall clock: the build
-stamps it with the newest modification time among the cached feeds, so two builds of the same feeds
-produce identical bytes and `dist/stats.json`'s `sha256` means something. Set `SOURCE_DATE_EPOCH`, or
-pass `node tools/build.js --stamp <iso|epoch>`, to pin it to a fixed instant instead.
+The published file is byte-reproducible. Two head lines make that verifiable rather than aspirational.
+`! List revision:` is a digest over every feed body the build consumed, so two machines holding the
+same feeds publish the same revision and `dist/stats.json`'s `sha256` can be checked against a file
+you downloaded. `! Last modified:` is not a wall clock either: it is the newest `Last-Modified` any
+upstream actually declares (16 of 27 feeds send one). Feeds whose server omits the header contribute
+no date - their changes show up in the revision line instead, so the list never claims a day its
+sources did not. Set `SOURCE_DATE_EPOCH`, or pass `node tools/build.js --stamp <iso|epoch>`, to pin
+the timestamp to a fixed instant instead.
 
 The cold/warm difference is entirely in the fetch stage. A cached build never touches the network:
-`tools/build.js` points `hostlist-compiler` at the cached files, so one flaky feed degrades to
-"one source reported missing" instead of aborting the run. Run `tools/fetch.js` first whenever the
-cache is empty or stale.
+`tools/build.js` points `hostlist-compiler` at the cached files, so a feed the upstream stopped
+serving is reported rather than crashing the run. How loud that report is depends on the feed: if it
+is one the list is built from, the build refuses to publish, because a narrower list under the same
+name is worse than yesterday's file. The two abuse.ch URLhaus feeds are marked `optional: true`,
+since a missing feed makes a list narrower but never wrong, and a flaky upstream would otherwise put
+a red X on a repository whose published list is fine. Run `tools/fetch.js` first whenever the cache
+is empty or stale.
 
 ### Checking it against a live resolver
 

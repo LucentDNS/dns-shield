@@ -24,10 +24,12 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const crypto = require('crypto');
 const { spawnSync } = require('child_process');
 
 const ROOT = path.resolve(__dirname, '..');
 const CACHE = path.join(ROOT, '.cache', 'sources');
+const META = path.join(CACHE, '.meta.json');
 const DIST = path.join(ROOT, 'dist');
 const LOG_FILE = path.join(DIST, 'build.log');
 const SOURCES = require('./sources.js');
@@ -47,44 +49,73 @@ const VERSION = process.env.DNS_SHIELD_VERSION || '1.0.0';
 const HOMEPAGE = process.env.DNS_SHIELD_HOMEPAGE || 'https://github.com/LucentDNS/dns-shield';
 
 /**
- * The `! Last modified:` stamp, derived from the inputs rather than from the clock.
+ * The list's identity and its `! Last modified:` stamp, both derived from the inputs.
  *
  * A wall-clock stamp inside the published file means two builds of the same feeds produce different
  * bytes, so dist/stats.json's sha256 can never be predicted or compared against a downloaded copy.
  * Stamping the repository's own commit time would fix that but can never settle: a commit cannot
  * contain its own timestamp, so every publish would invalidate the hash it just wrote.
  *
- * So the stamp is the newest modification time among the cached feed bodies - the one thing it is
- * actually describing. Re-running the build with an unchanged cache reproduces the exact bytes;
- * fetching fresher feeds moves the stamp forward exactly when the data behind it moved. CI restores
- * `.cache/sources` with mtimes intact, which is what keeps this stable there too.
+ * So both values describe the DATA. tools/fetch.js writes `.cache/sources/.meta.json` holding each
+ * feed's sha256 (of the normalised body) and its upstream `Last-Modified` when the server sent one.
+ * From that:
  *
- * `SOURCE_DATE_EPOCH` (https://reproducible-builds.org/specs/source-date-epoch/) overrides it when
- * a caller needs to pin the value; `--stamp` does the same from the command line.
+ *   REVISION  = sha256 of "id:digest" over every present feed, first 12 hex - the exact input set.
+ *               This is what makes the published bytes a function of the data: if any feed body
+ *               changes, this changes, even for feeds that never send a date.
+ *   TIMESTAMP = the newest upstream `Last-Modified` any feed actually declares. Feeds whose server
+ *               omits the header simply do not contribute a date - their changes surface through
+ *               REVISION instead. Inventing a plausible-looking date for them would put a fictional
+ *               day at the top of a list whose reader has no way to tell which lines are real.
+ *
+ * File mtimes are deliberately NOT used: a fresh CI checkout hands byte-identical files brand-new
+ * mtimes, which would make the published file differ from the one built here and turn every
+ * scheduled run into a commit that changes nothing but its own header.
+ *
+ * `SOURCE_DATE_EPOCH` (https://reproducible-builds.org/specs/source-date-epoch/) overrides the
+ * timestamp when a caller needs to pin it; `--stamp` does the same from the command line.
  */
-function lastModified() {
+function pins() {
+    const meta = new Map();
+    try {
+        const raw = JSON.parse(fs.readFileSync(META, 'utf8'));
+        Object.keys(raw).sort().forEach((id) => meta.set(id, raw[id]));
+    } catch {
+        // No provenance yet (or no cache at all): the caller is about to fail on missing sources.
+    }
+
+    const ids = [...meta.keys()];
+    const revision = ids.length
+        ? crypto.createHash('sha256').update(ids.map((id) => `${id}:${meta.get(id).sha256 || ''}`).join('\n'), 'utf8')
+            .digest('hex').slice(0, 12)
+        : 'unknown';
+
+    let newest = 0;
+    let dated = 0;
+    ids.forEach((id) => {
+        const when = Date.parse(meta.get(id).upstream || '');
+        if (!Number.isNaN(when)) {
+            dated += 1;
+            if (when > newest) newest = when;
+        }
+    });
+
     const flag = process.argv.indexOf('--stamp');
     const pinned = flag > -1 ? process.argv[flag + 1] : process.env.SOURCE_DATE_EPOCH;
+    let stamp = newest ? new Date(newest).toISOString() : new Date().toISOString();
     if (pinned) {
-        if (/^\d+$/.test(String(pinned))) return new Date(Number(pinned) * 1000).toISOString();
-        const parsed = new Date(pinned);
-        if (!Number.isNaN(parsed.getTime())) return parsed.toISOString();
-        log(`WARNING  could not read the pinned stamp ${pinned}, falling back to the cache`);
+        const asEpoch = /^\d+$/.test(String(pinned)) ? new Date(Number(pinned) * 1000).toISOString() : null;
+        const parsed = asEpoch ? new Date(asEpoch) : new Date(pinned);
+        if (!Number.isNaN(parsed.getTime())) stamp = parsed.toISOString();
+        else log(`WARNING  could not read the pinned stamp ${pinned}, falling back to the cache`);
     }
-    let newest = 0;
-    try {
-        for (const entry of fs.readdirSync(CACHE)) {
-            if (entry.startsWith('.')) continue;
-            const mtime = fs.statSync(path.join(CACHE, entry)).mtimeMs;
-            if (mtime > newest) newest = mtime;
-        }
-    } catch {
-        // No cache yet: the caller is about to fail on the missing sources anyway.
-    }
-    if (newest) return new Date(newest).toISOString();
-    return new Date().toISOString();
+    return {
+        revision, stamp, sources: ids.length, dated,
+    };
 }
-const TIMESTAMP = lastModified();
+const PINS = pins();
+const TIMESTAMP = PINS.stamp;
+const REVISION = PINS.revision;
 
 const RE_LABEL = /^(?=.{1,253}$)([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/;
 const RE_BLOCK = /^\|\|([a-z0-9][a-z0-9.-]*)\^$/;
@@ -199,7 +230,8 @@ function main() {
 
     banner(`${NAME} ${VERSION} - build`);
     log(`time      ${new Date().toISOString()}`);
-    log(`stamp     ${TIMESTAMP}${process.argv.includes('--stamp') || process.env.SOURCE_DATE_EPOCH ? ' (pinned)' : ' (newest cached feed)'}`);
+    log(`stamp     ${TIMESTAMP}${process.argv.includes('--stamp') || process.env.SOURCE_DATE_EPOCH ? ' (pinned)' : ' (from feed provenance)'}`);
+    log(`revision  ${REVISION} (over ${PINS.sources} cached feeds)`);
     log(`node      ${process.version}`);
     log(`compiler  ${COMPILER_ENTRY}`);
     log(`output    ${OUT}`);
@@ -217,6 +249,13 @@ function main() {
         }
     });
     const missing = required.filter((s) => !available.has(s.id));
+    // A source is fatal when the list's correctness depends on it. `optional: true` marks the ones
+    // whose absence only costs completeness - a flaky upstream that ships malware URLs rather than
+    // anything the other layers cannot cover. The distinction is deliberately visible to the
+    // maintainer (a hard error, a red run) and invisible to the subscriber, whose list stays valid:
+    // missing rules make a list narrower, never wrong, and the audit still has to pass either way.
+    const fatal = missing.filter((s) => s.optional !== true);
+    const skipped = missing.filter((s) => s.optional === true);
 
     const blocking = required.filter((s) => s.layer !== 'exceptions' && s.layer !== 'exclusions');
     const blockingIds = new Set(blocking.map((s) => s.id));
@@ -237,13 +276,22 @@ function main() {
         log(`  ${n ? '[ OK ]' : '[MISS]'} ${s.id.padEnd(26)} ${n ? `${String(n).padStart(7)} entries` : 'not cached'}`);
     });
     if (missing.length) {
-        log('\nWARNING - missing sources (build continues without them):');
-        missing.forEach((s) => log(`  - ${s.id} (${s.layer})`));
-        log('  run: node tools/fetch.js');
+        if (fatal.length) {
+            log(`\nMISSING SOURCES: ${fatal.length} source(s) the list is built from are absent.`);
+            fatal.forEach((s) => log(`  - ${s.id} (${s.layer})`));
+            log('  a build without them would publish a narrower list under the same name, so it is refused.');
+            log('  run: node tools/fetch.js');
+        }
+        if (skipped.length) {
+            if (fatal.length) log('');
+            log(`NOTE  ${skipped.length} optional source(s) missing - the list stays valid, just narrower:`);
+            skipped.forEach((s) => log(`  - ${s.id} (${s.layer})`));
+        }
     }
 
     const usable = blocking.filter((s) => available.has(s.id) && s.id !== exclusionsId);
     if (usable.length === 0) throw new Error('no blocking sources available - run tools/fetch.js first');
+    if (fatal.length) throw new Error(`${fatal.length} source(s) missing from the cache: ${fatal.map((s) => s.id).join(', ')} - run tools/fetch.js`);
 
     banner('stage 2  compile blocking rules');
     const excludedIds = available.has(exclusionsId) ? new Set([exclusionsId]) : new Set();
@@ -452,6 +500,7 @@ function main() {
         `! License: GPL-3.0`,
         `! Version: ${VERSION}`,
         `! Last modified: ${TIMESTAMP}`,
+        `! List revision: ${REVISION}`,
         `!`,
         `! Built from ${singleTopicCount} single-topic upstream feeds, ${coverageCount} compiled`,
         `! coverage lists and ${policyCount} policy lists. The policy lists block nothing: they only`,
@@ -476,7 +525,7 @@ function main() {
     log(`bytes            ${out.length.toLocaleString()} (${(out.length / 1048576).toFixed(2)} MiB)`);
     log(`output           ${OUT}`);
     log(`elapsed          ${elapsed}s`);
-    if (missing.length) log(`WARNING          ${missing.length} source(s) missing - see stage 1`);
+    if (missing.length) log(`NOTE             ${missing.length} source(s) missing - ${fatal.length} fatal, ${skipped.length} optional`);
 
     fs.writeFileSync(LOG_FILE, `${logLines.join('\n')}\n`, 'utf8');
     log(`log              ${LOG_FILE}`);

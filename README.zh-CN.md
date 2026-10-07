@@ -78,8 +78,9 @@ https://raw.githubusercontent.com/LucentDNS/dns-shield/main/dist/dns-shield.txt
 
 - **它绝不会发布未经校验的列表。** 审计、覆盖率对账、回归预算都在提交步骤之前运行，一旦回归就以
   非零码退出，因此构建失败只会让昨天的文件继续留在这里，而不会把你的解析器换成一个更糟的版本。
-- **时间戳是可复现的。** `! Last modified:` 取自最新的源文件而不是当前时钟，所以 `dist/stats.json`
-  里的哈希对应的就是你实际下载到的那份字节。
+- **文件头部是可复现的。** `! List revision:` 是所有源文件正文的摘要，`! Last modified:` 取自上游
+  `Last-Modified` 而不是当前时钟，所以 `dist/stats.json` 里的哈希对应的就是你实际下载到的那份字节，
+  而不是它被重新构建的时刻。
 
 GitHub 会停用「连续 60 天无任何活动」的仓库里的定时工作流；每日提交本身就是活动，所以只有当上游所有
 源整整两个月都没动静时这条才会生效。
@@ -255,13 +256,20 @@ node tools/referral-gaps.js  # 刷新 REFERRAL-GAPS.md；加 --check 则只校�
 文件，因此并没有 `--missing` 这个参数。`node tools/build.js --no-compile` 复用
 `dist/.compiled.raw`；`node tools/build.js --out <path>` 把列表写到其他位置。
 
-发布文件是字节可复现的。里面的 `! Last modified:` 不是墙上时间：构建时取所有缓存 feed 中最新的修改
-时间写入，所以用同一批 feed 构建两次得到的字节完全相同，`dist/stats.json` 里的 `sha256` 也就有了意义。
-需要固定值时，可以设置 `SOURCE_DATE_EPOCH`，或运行 `node tools/build.js --stamp <iso|epoch>`。
+发布文件是字节可复现的，而且头部两行让这件事可以被验证，而不只是一句声明。`! List revision:`
+是对构建所消费的每一份 feed 正文求出的摘要——两台机器拿着同一批 feed 就会算出同一个 revision，
+`dist/stats.json` 里的 `sha256` 也就能拿来核对你下载到的那份文件。`! Last modified:` 同样不是墙上
+时间：它是上游真正声明过的最新 `Last-Modified`（27 个源里有 16 个会返回）。服务器不返回该头部的
+源**不贡献任何日期**，它们的变化只由 revision 那一行体现——这样列表就不会写上一个它的上游从未
+声明过的日子。需要固定值时，可以设置 `SOURCE_DATE_EPOCH`，或运行
+`node tools/build.js --stamp <iso|epoch>`。
 
 冷启动与热构建的差别完全在抓取阶段。命中缓存的构建不访问网络：`tools/build.js` 让
-`hostlist-compiler` 读取缓存文件，因此某个订阅源不稳定只会退化为“报告一个源缺失”，而不会中断整次
-运行。缓存为空或过期时，请先运行 `tools/fetch.js`。
+`hostlist-compiler` 读取缓存文件，因此上游停更的订阅源只会被“报告出来”，而不会让整次构建崩掉。
+但报告的口气取决于这个源：如果它是列表赖以构建的源，构建会**拒绝发布**——用同一个名字发布一份更窄
+的列表，比继续用昨天的文件更糟。两个 abuse.ch 的 URLhaus 源被标记为 `optional: true`，因为少一份
+源只会让列表更窄、绝不会让它变错，而上游不稳定时否则就会给一个成品完全正常的仓库挂上红叉。缓存为空
+或过期时，请先运行 `tools/fetch.js`。
 
 ### 用真实解析器验证
 

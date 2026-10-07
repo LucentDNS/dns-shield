@@ -51,8 +51,20 @@ and the log is written to `dist/build.log` even when the build throws.
 
 ### 1. Sources
 Reads `tools/sources.js`, checks each cached feed exists and is non-empty, and reports any that are
-missing. A missing feed does not abort the build - it is reported in the summary and promoted to a
-CI failure after publishing, so the previous list stays live.
+missing. A missing feed is classified by whether the list's correctness rests on it:
+
+- **Required** (everything without `optional: true`): the build refuses outright. Publishing a
+  narrower list under the same name while the build reports success is the one failure mode that
+  produces something valid-looking and quietly worse.
+- **Optional** (`optional: true` - currently the two abuse.ch URLhaus feeds): the build continues and
+  says `NOTE ... the list stays valid, just narrower`. A missing feed makes a list narrower, never
+  wrong, and abuse.ch answers 503s and timeouts often enough (measured: two of three forced refetches)
+  that failing over it would put a red X on a repository whose published list is fine.
+
+The distinction is visible to the maintainer and invisible to the subscriber: the workflow step that
+reports feed availability runs *after* Publish, so a missing feed never keeps the previous list live,
+and only a `MISSING SOURCES:` line - which cannot happen, because the build already refused - fails
+the run. An optional feed that is down produces an `::notice::`, not an error.
 
 ### 2. Compile blocking rules
 Feeds are handed to `@adguard/hostlist-compiler` as *local file* sources, one per feed. This is the
@@ -225,12 +237,27 @@ A published list is a file people subscribe to, so its bytes are treated as an a
 prose. `! Last modified:` used to be `new Date().toISOString()`, which made two builds of identical
 inputs differ and left the `sha256` in `dist/stats.json` uncomparable with anything.
 
-`tools/build.js` now derives that stamp from the inputs it was built from: the newest modification
-time among the cached feed bodies. That is the one value the line is actually describing, and it
-gives the property that matters - re-running the build against an unchanged cache produces identical
-bytes, while fetching fresher feeds moves the stamp forward exactly when the data behind it moved.
-The value is logged on the `stamp` line. `SOURCE_DATE_EPOCH`, or `--stamp <iso|epoch>`, pins it when
-a caller needs a fixed value.
+`tools/fetch.js` now records provenance for every feed in `.cache/sources/.meta.json`: the sha256 of
+the normalised body, the upstream `Last-Modified` when the server sends one, and the ETag. From that
+`tools/build.js` derives two header lines:
+
+- `! List revision: <12 hex>` — `sha256` over `id:digest` for every present feed. This is the true
+  identity of the published artifact: two machines holding the same feed bodies compute the same
+  revision, and `dist/stats.json`'s `sha256` can be checked against a downloaded copy.
+- `! Last modified: <iso>` — the newest upstream `Last-Modified` that any feed actually declares.
+  Feeds whose server sends none contribute no date at all; their changes surface through the revision
+  line instead. An earlier version minted a plausible-looking date for them from their digest, and the
+  effect was a published list dated in the future (`2029-03-27`) with no way for a reader to tell which
+  lines were real. A list should not state a date its upstreams never claimed.
+
+**File mtimes are deliberately not used.** A fresh CI checkout hands byte-identical files brand-new
+mtimes, which made the published file differ from the one built here and turned every scheduled run
+into a commit whose only change was its own header. Of the upstreams probed, only `adguardteam.github.io`,
+`anti-ad.net`, `easylist.to` and `phishing.army` return a `Last-Modified` (16 of 27 feeds do); GitHub's
+raw CDN returns only an ETag, which is why the digest path carries the rest of the feeds.
+
+The applied values are logged on the `stamp` and `revision` lines. `SOURCE_DATE_EPOCH`, or
+`--stamp <iso|epoch>`, pins the timestamp when a caller needs a fixed value.
 
 Two rejected alternatives are worth recording, because both look simpler:
 
@@ -241,9 +268,13 @@ Two rejected alternatives are worth recording, because both look simpler:
   contain its own timestamp, so every publish would change the stamp and invalidate the hash it just
   wrote. Deriving the stamp from the feeds breaks that loop, because the feeds do not change when a
   commit is made.
+- **Cache file mtimes.** Reproducible on one machine and stable in CI as long as `actions/cache@v4`
+  restores the tree, which is exactly why it was the first attempt - but it is a property of the
+  checkout, not of the data, so a cold cache (evicted after 7 days, or a different runner image)
+  silently changed the published bytes. The revision line removes that dependency.
 
-`!` comments carry no rules, so moving the stamp never touches the rule set (517,007 block / 19
-allow) or the byte count (11,758,563).
+`!` comments carry no rules, so moving the stamp never touches the rule set (516,987 block / 19
+allow) or the byte count (11,758,131).
 
 ## Known limitations
 

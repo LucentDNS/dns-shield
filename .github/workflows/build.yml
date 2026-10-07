@@ -123,10 +123,16 @@ jobs:
         run: node tools/referral-gaps.js
 
       - name: Publish
+        # `git pull --rebase` before the push is not optional: a scheduled run can start from a
+        # commit that a human push supersedes while the feeds are still downloading, and a plain
+        # push then fails with "fetch first" even though the build itself was perfect. Rebasing
+        # replays the one build commit on top of whatever landed meanwhile. If the concurrent
+        # commit already published identical dist/ bytes, the rebase drops this commit entirely and
+        # the push becomes a no-op - which is the desired outcome, not a lost update.
         run: |
           git config user.name  'dns-shield-bot'
           git config user.email 'dns-shield-bot@users.noreply.github.com'
-          git add dist/dns-shield.txt dist/stats.json dist/benchmark.txt SOURCES.md SOURCES.zh-CN.md REFERRAL-GAPS.md
+          git add -A
           if git diff --cached --quiet; then
             echo 'no change to publish'
             exit 0
@@ -135,14 +141,30 @@ jobs:
           ALLOW=$(node -e "console.log(require('./dist/stats.json').allowRules)")
           SIZE=$(node -e "console.log(require('./dist/stats.json').mib)")
           git commit -m "build: ${BLOCK} block rules, ${ALLOW} exceptions, ${SIZE} MiB"
-          git push
+          git -c rebase.autoStash=true pull --rebase --autostash origin "${GITHUB_REF_NAME}"
+          # Second attempt covers the narrow window between the rebase and the push.
+          git push || { sleep 5; git -c rebase.autoStash=true pull --rebase --autostash origin "${GITHUB_REF_NAME}"; git push; }
 
-      - name: Fail loudly if a feed went missing
-        # A silently-missing feed is the one failure mode that produces a valid-looking but
-        # narrower list, so it is promoted to a hard error after the publish step.
+      - name: Report feed availability
+        # Runs after Publish on purpose: a missing feed must never keep the previous list in place, and
+        # what the subscriber needs (a valid list) has already been delivered by then. The distinction
+        # mirrors tools/build.js - a missing source the list is built from refuses the build, so it
+        # cannot reach this step; only optional sources can, and they are reported without turning the
+        # run red. A quietly narrowed list deserves a notice, not a red X on a repository whose
+        # published list is correct.
         run: |
-          if grep -q 'WARNING .*source(s) missing' dist/build.log; then
-            echo '::error::one or more feeds failed to download - see dist/build.log'
-            grep 'WARNING' dist/build.log
+          if [ ! -f dist/build.log ]; then
+            echo 'no build log to inspect'
+            exit 0
+          fi
+          if grep -q 'MISSING SOURCES:' dist/build.log; then
+            echo '::error::a source the list is built from was missing - the build should have refused'
+            grep -A5 'MISSING SOURCES:' dist/build.log
             exit 1
+          fi
+          if grep -q 'optional source(s) missing' dist/build.log; then
+            echo '::notice title=List published without an optional feed::a flaky upstream was down, so this run is narrower than usual'
+            grep -A5 'optional source(s) missing' dist/build.log
+          else
+            echo 'all sources present'
           fi
