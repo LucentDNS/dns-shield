@@ -4,9 +4,9 @@
 
 Source allowlist: `allowlist-referral.txt` (HaGeZi's Allowlist Referral, AdGuard Home filter_45)
 
-Against `dist/dns-shield.txt` (537,643 block rules) that allowlist
+Against `dist/dns-shield.txt` (536,888 block rules) that allowlist
 releases **277 exact hostnames** across **254 registrable domains**,
-plus **22 wildcard rules** that each cover blocked names.
+plus **23 wildcard rules** that each cover blocked names.
 
 AdGuard Home applies whitelist filters *over* blocklists, so while that filter is enabled
 these hostnames resolve normally instead of being blocked. The filter is off by default in
@@ -1103,6 +1103,7 @@ if you turn it on.
 - `@@||app*.outreach.io^` covers 3 blocked name(s): `app1e.kaiafrontdoor.outreach.io`, `app1e.oats.outreach.io`, `app1e.oneclick.outreach.io`
 - `@@||app*.salesmanago.pl^` covers 1 blocked name(s): `app2.salesmanago.pl`
 - `@@||app.*.adjust.com^` covers 1 blocked name(s): `app.us.adjust.com`
+- `@@||cl*.exct.net^` covers 1 blocked name(s): `cl.s13.exct.net`
 - `@@||e*.customeriomail.com^` covers 1 blocked name(s): `e-eu.customeriomail.com`
 - `@@||edge*.customer.io^` covers 1 blocked name(s): `edge-west.customer.io`
 - `@@||ek*.voyage-prive.com^` covers 1 blocked name(s): `ek8.voyage-prive.com`
