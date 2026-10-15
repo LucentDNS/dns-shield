@@ -1,20 +1,20 @@
-benchmark  runnervmmprz5  2026-10-14T10:38:30.219Z
+benchmark  runnervmmprz5  2026-10-15T08:21:07.508Z
 
 ============================================================================
 our list
 ============================================================================
-  file                              12,553,682 bytes
-  block rules                       544,888
+  file                              12,577,887 bytes
+  block rules                       545,702
   allow rules                       28
 
 ============================================================================
 coverage against peers
 ============================================================================
   peer                  their rules  we have %   they lack   we lack
-  AdGuard DNS filter    183,520      98.9%       2,102       363,470
-  HaGeZi's Pro          194,298      97.7%       4,554       355,144
-  OISD Big              237,525      98.6%       3,371       310,734
-  AdRules DNS List      203,663      98.5%       3,003       344,228
+  AdGuard DNS filter    183,837      98.9%       2,102       363,967
+  HaGeZi's Pro          195,679      97.7%       4,553       354,576
+  OISD Big              236,272      98.6%       3,369       312,799
+  AdRules DNS List      204,027      98.5%       3,002       344,677
 
   "we have %" is the share of that peer's blocking set we also block - its holes in us.
   "they lack" counts rules that peer has and we do not. "we lack" counts ours it does not have.
@@ -41,17 +41,17 @@ false-positive ruler (AdGuard exceptions)
 ============================================================================
 verdict
 ============================================================================
-  our block rules                     544,888
-  union of the four peers             550,804
-  largest peer                        OISD Big            237,525
+  our block rules                     545,702
+  union of the four peers             551,619
+  largest peer                        OISD Big            236,272
   union coverage                      98.9% of every rule any of the four peers carries
-  union contributions                 544,888 from us, 5,916 only they carry
-  biggest remaining gap               HaGeZi's Pro        4,554 of its rules are not in ours
+  union contributions                 545,702 from us, 5,917 only they carry
+  biggest remaining gap               HaGeZi's Pro        4,553 of its rules are not in ours
 
   Peer rules we do not carry, per peer (this is what a future source would have to close):
-    HaGeZi's Pro          4,554
-    OISD Big              3,371
-    AdRules DNS List      3,003
+    HaGeZi's Pro          4,553
+    OISD Big              3,369
+    AdRules DNS List      3,002
     AdGuard DNS filter    2,102
 
 ============================================================================
