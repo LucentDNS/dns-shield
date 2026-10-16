@@ -1,11 +1,11 @@
 {
   "name": "DNS Shield",
-  "generated": "2026-10-15T10:21:12.231Z",
+  "generated": "2026-10-16T08:14:28.326Z",
   "file": "dns-shield.txt",
-  "bytes": 12577887,
-  "mib": 12,
-  "blockRules": 545702,
+  "bytes": 12628645,
+  "mib": 12.04,
+  "blockRules": 548145,
   "allowRules": 28,
   "feeds": 26,
-  "sha256": "2425fd5e8de2f7f144da6443baa9702e3afcbeb3a05d32a7ebd78a7987f24d0b"
+  "sha256": "d7f50f45a861c0293a4b5ed6aa1ea82aaf7cdcc15a01d56cfb4a85c98f4c9569"
 }
